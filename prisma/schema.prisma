@@ -1,0 +1,783 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  OWNER
+  ADMIN
+  COACH
+  STUDENT
+}
+
+enum PoolStatus {
+  ACTIVE
+  MAINTENANCE
+}
+
+model User {
+  id String @id @default(cuid())
+
+  name String @db.VarChar(100)
+
+  // Username adalah kredensial login utama.
+  username String @unique @db.VarChar(50)
+
+  // Email tetap unik sebagai data profil/kontak, bukan kredensial login utama.
+  email String @unique @db.VarChar(160)
+
+  // Nomor WhatsApp/HP akun; dapat diubah sendiri melalui Settings Profil.
+  phone String? @db.VarChar(30)
+
+  // Selalu simpan hash bcrypt/bcryptjs, tidak pernah password plaintext.
+  password String @db.VarChar(255)
+
+  profileImage String? @map("profile_image") @db.VarChar(500)
+  role         UserRole @default(STUDENT)
+
+  // Khusus pengguna COACH, contoh: Pemula, Menengah, Atlet.
+  specialization String? @db.VarChar(30)
+
+  isActive Boolean @default(true) @map("is_active")
+
+  studentProfile   Student?          @relation("UserStudentProfile")
+  staffProfile     Staff?            @relation("UserStaffProfile")
+  coachAssignments CoachAssignment[] @relation("CoachAssignments")
+  studentReports   StudentReport[]   @relation("ReportCoach")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Pool {
+  id String @id @default(cuid())
+
+  name     String @db.VarChar(120)
+  location String @db.VarChar(160)
+
+  // Kedalaman kolam dalam meter, misalnya 1.2, 2.0, atau 3.0.
+  depth    Float
+  capacity Int
+  status   PoolStatus @default(ACTIVE)
+  imageUrl String?    @map("image_url") @db.VarChar(500)
+
+  schedules Schedule[] @relation("ScheduleTrainingVenue")
+  packages  Package[]  @relation("PackageDefaultTrainingVenue")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([location])
+  @@map("pools")
+}
+
+enum StaffStatus {
+  ACTIVE
+  ON_LEAVE
+  INACTIVE
+}
+
+model Staff {
+  id String @id @default(cuid())
+
+  // Opsional: staff dapat dikaitkan ke akun login User bila diperlukan.
+  userId String? @unique @map("user_id")
+  user   User?   @relation("UserStaffProfile", fields: [userId], references: [id], onDelete: SetNull)
+
+  name         String      @db.VarChar(100)
+  position     String      @db.VarChar(80)
+  department   String?     @db.VarChar(80)
+  email        String?     @unique @db.VarChar(160)
+  phone        String      @db.VarChar(30)
+  profileImage String?     @map("profile_image") @db.VarChar(500)
+  status       StaffStatus @default(ACTIVE)
+  joinedAt     DateTime?   @map("joined_at") @db.Date
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([position])
+  @@index([department])
+  @@map("staff")
+}
+
+enum StudentLevel {
+  AAA
+  A3
+  SWDC
+}
+
+enum StudentStatus {
+  ACTIVE
+  PENDING
+  COMPLETED
+  INACTIVE
+}
+
+model Student {
+  id String @id @default(cuid())
+
+  // Akun login opsional untuk siswa yang sudah memiliki User STUDENT.
+  userId String? @unique @map("user_id")
+  user   User?   @relation("UserStudentProfile", fields: [userId], references: [id], onDelete: SetNull)
+
+  name String @db.VarChar(100)
+
+  dateOfBirth DateTime? @map("date_of_birth") @db.Date
+
+  // Sesuai form Phase 1 yang menggunakan input "Usia".
+  // Rekomendasi pengembangan berikutnya: ganti/tambah dateOfBirth DateTime
+  // agar usia dapat dihitung otomatis dan tidak perlu diperbarui manual.
+  age Int
+
+  // Nomor WhatsApp/telepon orang tua atau wali.
+  parentContact String @map("parent_contact") @db.VarChar(30)
+
+  // Informasi sensitif: batasi akses berdasarkan role pada API/Server Action.
+  healthHistory String? @map("health_history") @db.Text
+
+  level  StudentLevel  @default(AAA)
+  status StudentStatus @default(PENDING)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subscriptions      Subscription[]
+  transactions       Transaction[]
+  bookings           Booking[]
+  reports            StudentReport[]
+  convertedFromLeads Lead[]          @relation("LeadConvertedStudent")
+
+  // Relasi berikutnya ditambahkan setelah model terkait dibuat, misalnya:
+  // enrollments Enrollment[]
+  // attendances Attendance[]
+
+  @@index([name])
+  @@index([level])
+  @@index([status])
+  @@index([level, status])
+  @@map("students")
+}
+
+enum ScheduleProgram {
+  AAA
+  A3
+  SWDC
+  PRIVATE
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum ScheduleStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+enum SlotStatus {
+  OPEN
+  FULL
+  CLOSED
+  CANCELLED
+}
+
+enum CoachAssignmentRole {
+  LEAD
+  ASSISTANT
+  SUBSTITUTE
+}
+
+enum CoachAssignmentStatus {
+  ASSIGNED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Schedule {
+  id String @id @default(cuid())
+
+  // Contoh: "AAA Pemula - Senin Sore" atau "Private - Sabtu Pagi".
+  title String @db.VarChar(120)
+
+  program   ScheduleProgram
+  dayOfWeek DayOfWeek       @map("day_of_week")
+
+  // Format 24 jam "HH:mm", misalnya "16:00".
+  // Untuk recurring weekly schedule, format string ini mudah divalidasi di API.
+  startTime String @map("start_time") @db.VarChar(5)
+  endTime   String @map("end_time") @db.VarChar(5)
+
+  // Kapasitas default setiap occurrence/slot.
+  // Gunakan 1 untuk program PRIVATE.
+  capacity Int @default(10)
+
+  // Relasi formal ke Data Master Tempat Latihan (model Pool).
+  trainingVenueId String? @map("training_venue_id")
+  trainingVenue   Pool?   @relation("ScheduleTrainingVenue", fields: [trainingVenueId], references: [id], onDelete: SetNull)
+
+  // Snapshot nama tempat latihan agar histori/tampilan jadwal tetap terbaca
+  // walaupun nama master tempat latihan berubah di kemudian hari.
+  poolName String  @map("pool_name") @db.VarChar(120)
+  lane     String? @db.VarChar(80)
+
+  status ScheduleStatus @default(ACTIVE)
+  notes  String?        @db.Text
+
+  // Periode jadwal berulang berlaku; null pada effectiveEndDate berarti terbuka.
+  effectiveStartDate DateTime? @map("effective_start_date") @db.Date
+  effectiveEndDate   DateTime? @map("effective_end_date") @db.Date
+
+  slots       Slot[]
+  assignments CoachAssignment[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([program, dayOfWeek])
+  @@index([dayOfWeek, startTime])
+  @@index([trainingVenueId])
+  @@index([status])
+  @@map("schedules")
+}
+
+model Slot {
+  id String @id @default(cuid())
+
+  scheduleId String   @map("schedule_id")
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  // Occurrence nyata dari Schedule pada tanggal tertentu.
+  startsAt DateTime @map("starts_at")
+  endsAt   DateTime @map("ends_at")
+
+  // Snapshot kapasitas saat slot dibuat, agar perubahan Schedule berikutnya
+  // tidak mengubah histori slot yang sudah berjalan.
+  capacity    Int
+  bookedCount Int @default(0) @map("booked_count")
+
+  status SlotStatus @default(OPEN)
+  notes  String?    @db.Text
+
+  coachAssignments CoachAssignment[]
+  bookings         Booking[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([scheduleId, startsAt])
+  @@index([startsAt])
+  @@index([status])
+  @@index([scheduleId, startsAt])
+  @@map("slots")
+}
+
+model CoachAssignment {
+  id String @id @default(cuid())
+
+  scheduleId String   @map("schedule_id")
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  // Null berarti penugasan berlaku untuk jadwal berulang.
+  // Terisi berarti penugasan/override hanya untuk satu slot/tanggal tertentu.
+  slotId String? @map("slot_id")
+  slot   Slot?   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  coachId String @map("coach_id")
+  coach   User   @relation("CoachAssignments", fields: [coachId], references: [id], onDelete: Restrict)
+
+  role   CoachAssignmentRole   @default(LEAD)
+  status CoachAssignmentStatus @default(ASSIGNED)
+
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  notes      String?  @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([scheduleId, slotId, coachId])
+  @@index([coachId])
+  @@index([scheduleId])
+  @@index([slotId])
+  @@index([status])
+  @@map("coach_assignments")
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Booking {
+  id String @id @default(cuid())
+
+  slotId String @map("slot_id")
+  slot   Slot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  studentId String  @map("student_id")
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  status      BookingStatus @default(CONFIRMED)
+  notes       String?       @db.Text
+  bookedAt    DateTime      @default(now()) @map("booked_at")
+  cancelledAt DateTime?     @map("cancelled_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([slotId, status])
+  @@index([studentId, status])
+  @@index([bookedAt])
+  @@map("bookings")
+}
+
+enum ReportStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum ReportRecommendation {
+  STAY
+  LEVEL_UP
+  EXTRA_PRACTICE
+}
+
+model StudentReport {
+  id String @id @default(cuid())
+
+  studentId String  @map("student_id")
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  // Pelatih penilai. Nullable agar raport tetap ada bila akun pelatih dihapus.
+  coachId String? @map("coach_id")
+  coach   User?   @relation("ReportCoach", fields: [coachId], references: [id], onDelete: SetNull)
+
+  // Snapshot level siswa pada periode raport diterbitkan.
+  level StudentLevel
+
+  // Label periode bebas, misalnya "Oktober 2026" atau "Semester 1 2026".
+  // Satu siswa hanya memiliki satu raport untuk label periode yang sama.
+  periodLabel String    @map("period_label") @db.VarChar(80)
+  periodStart DateTime? @map("period_start") @db.Date
+  periodEnd   DateTime? @map("period_end") @db.Date
+
+  // Ringkasan kehadiran manual pada periode raport.
+  sessionsAttended Int? @map("sessions_attended")
+  totalSessions    Int? @map("total_sessions")
+
+  coachNotes     String?              @map("coach_notes") @db.Text
+  recommendation ReportRecommendation @default(STAY)
+
+  status      ReportStatus @default(DRAFT)
+  publishedAt DateTime?    @map("published_at")
+
+  items StudentReportItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([studentId, periodLabel])
+  @@index([level])
+  @@index([status])
+  @@index([coachId])
+  @@index([periodLabel])
+  @@map("student_reports")
+}
+
+model StudentReportItem {
+  id String @id @default(cuid())
+
+  reportId String        @map("report_id")
+  report   StudentReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  // Nama kompetensi sesuai katalog level, dapat ditambah/diedit manual.
+  competency String @db.VarChar(120)
+
+  // Skor kualitatif 1 (Perlu Bimbingan) sampai 5 (Sangat Mahir).
+  score Int
+
+  note      String? @db.VarChar(300)
+  sortOrder Int     @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([reportId])
+  @@map("student_report_items")
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  QRIS
+}
+
+enum TransactionType {
+  SUBSCRIPTION_PAYMENT
+  PRIVATE_VOUCHER
+  REGISTRATION
+  OTHER
+}
+
+enum TransactionStatus {
+  PAID
+  PENDING
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PENDING
+  EXPIRED
+  CANCELLED
+  COMPLETED
+}
+
+model Package {
+  id String @id @default(cuid())
+
+  name        String  @db.VarChar(120)
+  description String? @db.Text
+
+  program ScheduleProgram
+
+  // Harga katalog dalam Rupiah penuh, tanpa desimal.
+  price Int
+
+  // Contoh: "1 Bulan", "3 Bulan", "6 Bulan".
+  durationLabel String @map("duration_label") @db.VarChar(80)
+  durationDays  Int    @map("duration_days")
+
+  // Null berarti paket hanya dibatasi masa berlaku, bukan jumlah sesi.
+  totalSessions Int? @map("total_sessions")
+
+  // Tempat latihan default dari Data Master (model internal tetap Pool).
+  // poolName dipertahankan sebagai snapshot tampilan/laporan.
+  defaultTrainingVenueId String? @map("default_training_venue_id")
+  defaultTrainingVenue   Pool?   @relation("PackageDefaultTrainingVenue", fields: [defaultTrainingVenueId], references: [id], onDelete: SetNull)
+  poolName               String? @map("pool_name") @db.VarChar(120)
+
+  isActive Boolean @default(true) @map("is_active")
+
+  subscriptions Subscription[]
+  transactions  Transaction[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([program])
+  @@index([isActive])
+  @@index([defaultTrainingVenueId])
+  @@map("packages")
+}
+
+model Subscription {
+  id String @id @default(cuid())
+
+  studentId String  @map("student_id")
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  // Relasi ke katalog paket saat pembelian. Snapshot nama, program, dan harga
+  // tetap dipertahankan agar histori tidak berubah saat katalog diperbarui.
+  packageId   String? @map("package_id")
+  package     Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  packageName String  @map("package_name") @db.VarChar(120)
+  program     ScheduleProgram
+  price       Int
+
+  // Kolam utama tempat paket digunakan. Nantinya dapat diganti relasi
+  // poolPartnerId ke model PoolPartner.
+  poolName String? @map("pool_name") @db.VarChar(120)
+
+  startsAt  DateTime @map("starts_at") @db.Date
+  expiresAt DateTime @map("expires_at") @db.Date
+
+  // Untuk voucher/paket berbasis jumlah sesi. Null berarti paket berbasis waktu saja.
+  totalSessions     Int? @map("total_sessions")
+  remainingSessions Int? @map("remaining_sessions")
+
+  status    SubscriptionStatus @default(PENDING)
+  autoRenew Boolean            @default(false) @map("auto_renew")
+  notes     String?            @db.Text
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([studentId])
+  @@index([packageId])
+  @@index([program])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([status, expiresAt])
+  @@map("subscriptions")
+}
+
+model Transaction {
+  id String @id @default(cuid())
+
+  // Nomor kwitansi/invoice yang tampil ke pelanggan, misalnya INV-20261028-0001.
+  invoiceNumber String @unique @map("invoice_number") @db.VarChar(40)
+
+  studentId String?  @map("student_id")
+  student   Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  subscriptionId String?       @map("subscription_id")
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  // Paket katalog yang dibayar. Relasi ini membuat invoice pending tetap
+  // dapat mengaktifkan/memperpanjang langganan ketika statusnya menjadi lunas.
+  packageId String?  @map("package_id")
+  package   Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  type        TransactionType @default(SUBSCRIPTION_PAYMENT)
+  description String          @db.VarChar(160)
+
+  // Snapshot untuk laporan per level dan per kolam. Data snapshot membuat
+  // laporan historis tetap konsisten jika nama paket/kolam berubah.
+  program  ScheduleProgram?
+  poolName String?          @map("pool_name") @db.VarChar(120)
+
+  // Nominal dalam Rupiah penuh, tanpa desimal.
+  amount Int
+
+  paymentMethod PaymentMethod     @map("payment_method")
+  status        TransactionStatus @default(PENDING)
+
+  // Nomor referensi transfer bank, QRIS, atau payment gateway.
+  referenceNumber String? @map("reference_number") @db.VarChar(100)
+
+  paidAt DateTime? @map("paid_at")
+
+  // Nantinya hubungkan ke model User/staff yang mencatat transaksi.
+  recordedById String? @map("recorded_by_id")
+  notes        String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([studentId])
+  @@index([subscriptionId])
+  @@index([packageId])
+  @@index([paidAt])
+  @@index([status])
+  @@index([paymentMethod])
+  @@index([program])
+  @@index([poolName])
+  @@index([status, paidAt])
+  @@map("transactions")
+}
+
+enum PromotionType {
+  FLASH_SALE
+  REFERRAL
+  VOUCHER
+  SEASONAL
+  PARTNER
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SESSION
+}
+
+enum PromotionStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  REDEEMED
+}
+
+enum ArticleStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LeadSource {
+  WEBSITE
+  LANDING_PAGE
+  INSTAGRAM
+  WHATSAPP
+  REFERRAL
+  WALK_IN
+  EVENT
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  WAITING_RESPONSE
+  TRIAL_SCHEDULED
+  TRIAL_COMPLETED
+  REGISTERED
+  NOT_INTERESTED
+  UNREACHABLE
+}
+
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Promotion {
+  id String @id @default(cuid())
+
+  title       String  @db.VarChar(140)
+  description String? @db.Text
+  type        PromotionType
+
+  // Kode publik promo/referral/voucher. Untuk voucher batch, setiap kode unik
+  // disimpan sebagai satu record Promotion agar pemakaian mudah diaudit.
+  code    String? @unique @db.VarChar(60)
+  batchId String? @map("batch_id") @db.VarChar(60)
+
+  discountType  DiscountType @map("discount_type")
+  discountValue Int          @map("discount_value")
+
+  // Snapshot syarat promo.
+  minPurchaseAmount Int?             @map("min_purchase_amount")
+  maxDiscountAmount Int?             @map("max_discount_amount")
+  program           ScheduleProgram?
+  poolName          String?          @map("pool_name") @db.VarChar(120)
+
+  startsAt DateTime @map("starts_at")
+  endsAt   DateTime @map("ends_at")
+
+  usageLimit    Int? @map("usage_limit")
+  perUserLimit  Int  @default(1) @map("per_user_limit")
+  redeemedCount Int  @default(0) @map("redeemed_count")
+
+  // Manfaat khusus referral; nilai mengikuti discountType yang dipilih.
+  referrerBenefit String? @map("referrer_benefit") @db.VarChar(160)
+  refereeBenefit  String? @map("referee_benefit") @db.VarChar(160)
+
+  status PromotionStatus @default(DRAFT)
+  terms  String?         @db.Text
+
+  // Nantinya hubungkan ke model User pembuat campaign.
+  createdById String? @map("created_by_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([status])
+  @@index([startsAt, endsAt])
+  @@index([batchId])
+  @@index([program])
+  @@map("promotions")
+}
+
+model Article {
+  id String @id @default(cuid())
+
+  title   String @db.VarChar(180)
+  slug    String @unique @db.VarChar(200)
+  excerpt String @db.Text
+
+  // HTML hasil WYSIWYG. Wajib disanitasi di server sebelum disimpan/ditampilkan publik.
+  content String @db.LongText
+
+  category String @db.VarChar(80)
+  tags     Json?
+
+  featuredImageUrl String? @map("featured_image_url") @db.VarChar(500)
+  featuredImageAlt String? @map("featured_image_alt") @db.VarChar(180)
+
+  seoTitle       String? @map("seo_title") @db.VarChar(180)
+  seoDescription String? @map("seo_description") @db.VarChar(320)
+
+  // Nantinya hubungkan authorId ke model User.
+  authorId   String? @map("author_id")
+  authorName String  @map("author_name") @db.VarChar(100)
+
+  status      ArticleStatus @default(DRAFT)
+  scheduledAt DateTime?     @map("scheduled_at")
+  publishedAt DateTime?     @map("published_at")
+  viewCount   Int           @default(0) @map("view_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([category])
+  @@index([publishedAt])
+  @@index([status, publishedAt])
+  @@map("articles")
+}
+
+model Lead {
+  id String @id @default(cuid())
+
+  studentName String @map("student_name") @db.VarChar(100)
+  studentAge  Int?   @map("student_age")
+
+  parentName    String  @map("parent_name") @db.VarChar(100)
+  parentPhone   String  @map("parent_phone") @db.VarChar(30)
+  parentEmail   String? @map("parent_email") @db.VarChar(160)
+
+  program        ScheduleProgram?
+  poolPreference String?          @map("pool_preference") @db.VarChar(120)
+
+  source       LeadSource @default(WEBSITE)
+  referralCode String?    @map("referral_code") @db.VarChar(60)
+  message      String?    @db.Text
+
+  status   LeadStatus   @default(NEW)
+  priority LeadPriority @default(MEDIUM)
+
+  // Nantinya hubungkan assignedToId ke model User/staff penanggung jawab.
+  assignedToId String? @map("assigned_to_id")
+
+  lastContactedAt DateTime? @map("last_contacted_at")
+  nextFollowUpAt  DateTime? @map("next_follow_up_at")
+  trialScheduledAt DateTime? @map("trial_scheduled_at")
+
+  convertedStudentId String?  @map("converted_student_id")
+  convertedStudent   Student? @relation("LeadConvertedStudent", fields: [convertedStudentId], references: [id], onDelete: SetNull)
+
+  internalNotes String? @map("internal_notes") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([parentPhone])
+  @@index([status])
+  @@index([source])
+  @@index([program])
+  @@index([nextFollowUpAt])
+  @@index([status, nextFollowUpAt])
+  @@index([convertedStudentId])
+  @@map("leads")
+}
