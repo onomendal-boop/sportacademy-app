@@ -31,14 +31,14 @@ import {
 } from './DataMasterUI';
 
 function specializationTone(specialization) {
-  if (specialization === 'Atlet') return 'violet';
-  if (specialization === 'Menengah') return 'blue';
+  if (specialization === 'SWDC Swimmer') return 'violet';
+  if (specialization === 'A3') return 'blue';
   if (specialization === 'Private') return 'amber';
   return 'green';
 }
 
-export default function CoachManager({ initialCoaches = [], canManage = false, canDelete = false }) {
-  const manager = useCoachManager(initialCoaches, canManage, canDelete);
+export default function CoachManager({ initialCoaches = [], canManage = false, canDelete = false, initialSearch = '' }) {
+  const manager = useCoachManager(initialCoaches, canManage, canDelete, initialSearch);
   const {
     filteredCoaches,
     stats,
@@ -140,7 +140,7 @@ export default function CoachManager({ initialCoaches = [], canManage = false, c
                     </td>
                     <td className="px-5 py-4">
                       <StatusBadge
-                        label={coach.specialization || 'Pemula'}
+                        label={coach.specialization || 'AAA Sport Academy'}
                         tone={specializationTone(coach.specialization)}
                       />
                     </td>

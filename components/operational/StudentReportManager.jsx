@@ -26,7 +26,7 @@ import useStudentReportManager, {
   getAverageScoreLabel,
 } from '@/hooks/useStudentReportManager';
 import {
-  REPORT_LEVEL_OPTIONS,
+  getReportLevelOptionsForScope,
   REPORT_STATUS_OPTIONS,
 } from '@/lib/operational/constants';
 import { formatDateKey } from '@/lib/operational/dateUtils';
@@ -92,6 +92,7 @@ export default function StudentReportManager({
   canManage = false,
   canDelete = false,
   currentUser = null,
+  initialSearch = '',
 }) {
   const manager = useStudentReportManager(initialReports, {
     students,
@@ -99,8 +100,10 @@ export default function StudentReportManager({
     canManage,
     canDelete,
     currentUser,
+    initialSearch,
   });
   const { stats } = manager;
+  const levelOptions = getReportLevelOptionsForScope(currentUser?.programScope);
 
   return (
     <div className="space-y-6">
@@ -174,7 +177,7 @@ export default function StudentReportManager({
           onChange={manager.onLevelFilterChange}
         >
           <option value="ALL">Semua Level</option>
-          {REPORT_LEVEL_OPTIONS.map((option) => (
+          {levelOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>

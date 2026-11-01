@@ -12,18 +12,18 @@ import {
 import { subscriptionSchema } from '@/lib/validations/finance';
 
 export async function GET() {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
   if (response) return response;
 
   try {
-    return NextResponse.json({ data: await getSubscriptions() });
+    return NextResponse.json({ data: await getSubscriptions(user) });
   } catch (error) {
     return handleFinanceError(error, 'Langganan');
   }
 }
 
 export async function POST(request) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
   if (response) return response;
 
   const { body, response: bodyResponse } = await parseJsonBody(request);
@@ -33,7 +33,7 @@ export async function POST(request) {
   if (!parsed.success) return validationResponse(parsed.error);
 
   try {
-    const subscription = await createSubscription(parsed.data);
+    const subscription = await createSubscription(parsed.data, user);
     return NextResponse.json({ data: subscription }, { status: 201 });
   } catch (error) {
     return handleFinanceError(error, 'Langganan');

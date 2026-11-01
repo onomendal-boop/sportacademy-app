@@ -48,16 +48,22 @@ function calculateAgeFromDateKey(dateKey) {
 export default function useStudentManager(
   initialStudents = [],
   canManage = false,
-  canDelete = false
+  canDelete = false,
+  programScope = null,
+  initialSearch = ''
 ) {
+  const scopedEmptyForm = {
+    ...EMPTY_FORM,
+    level: programScope ?? EMPTY_FORM.level,
+  };
   const [students, setStudents] = useState(initialStudents);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [levelFilter, setLevelFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
-  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [formData, setFormData] = useState(scopedEmptyForm);
   const [formErrors, setFormErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -106,7 +112,10 @@ export default function useStudentManager(
 
   function updateField(name, value) {
     setFormData((current) => {
-      const next = { ...current, [name]: value };
+      const next = {
+        ...current,
+        [name]: name === 'level' && programScope ? programScope : value,
+      };
 
       if (name === 'dateOfBirth' && value) {
         const calculatedAge = calculateAgeFromDateKey(value);
@@ -128,7 +137,7 @@ export default function useStudentManager(
   function openCreate() {
     if (!canManage) return;
     setEditingStudent(null);
-    setFormData(EMPTY_FORM);
+    setFormData(scopedEmptyForm);
     setFormErrors({});
     setIsFormOpen(true);
   }
@@ -160,7 +169,10 @@ export default function useStudentManager(
     event.preventDefault();
     if (!canManage || isSaving) return;
 
-    const parsed = studentSchema.safeParse(formData);
+    const parsed = studentSchema.safeParse({
+      ...formData,
+      level: programScope ?? formData.level,
+    });
 
     if (!parsed.success) {
       setFormErrors(getValidationFieldErrors(parsed.error));
@@ -188,7 +200,7 @@ export default function useStudentManager(
 
       setIsFormOpen(false);
       setEditingStudent(null);
-      setFormData(EMPTY_FORM);
+      setFormData(scopedEmptyForm);
       setFormErrors({});
     } catch (error) {
       if (error?.fieldErrors) {
@@ -227,6 +239,7 @@ export default function useStudentManager(
   }
 
   return {
+    programScope,
     students,
     filteredStudents,
     stats,

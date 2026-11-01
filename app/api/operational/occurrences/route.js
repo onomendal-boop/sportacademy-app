@@ -29,6 +29,7 @@ export async function GET(request) {
         role: user.role,
         userId: user.id,
         studentId: studentProfile?.id ?? null,
+        programScope: user.programScope ?? null,
       },
     });
     return NextResponse.json({ data: occurrences });

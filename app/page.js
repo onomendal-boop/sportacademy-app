@@ -20,18 +20,25 @@ import {
   Waves,
 } from 'lucide-react';
 
-import { getArticles, getPromos } from '../lib/public-data';
+import {
+  getArticles,
+  getFaqItems,
+  getLandingPrograms,
+  getLandingSettings,
+  getLandingStats,
+  getPromos,
+  getTestimonials,
+} from '../lib/public-data';
 import LandingNavbar from '../components/landing/LandingNavbar';
 import CopyPromoButton from '../components/landing/CopyPromoButton';
 import TestimonialSlider from '../components/landing/TestimonialSlider';
 import FaqAccordion from '../components/landing/FaqAccordion';
 import RegistrationCta from '../components/landing/RegistrationCta';
-import { FacebookIcon, InstagramIcon, YoutubeIcon } from '../components/landing/SocialIcons';
 
 export const metadata = {
   title: 'AAA Sport Academy | Les Renang Anak, Atlet & Private',
   description:
-    'AAA Sport Academy menyediakan program les renang AAA Pemula, A3 Menengah, SWDC Atlet, dan Private dengan pelatih berpengalaman serta kelompok belajar yang aman.',
+    'AAA Sport Academy menyediakan program les renang AAA Sport Academy, A3, SWDC Swimmer, dan Private dengan pelatih berpengalaman serta kelompok belajar yang aman.',
   keywords: ['les renang anak', 'sekolah renang', 'renang private', 'AAA Sport Academy'],
   openGraph: {
     title: 'AAA Sport Academy | Swimming Academy',
@@ -42,83 +49,12 @@ export const metadata = {
   },
 };
 
-const programs = [
-  {
-    code: 'AAA',
-    name: 'AAA Pemula',
-    tagline: 'Berani dan aman di air',
-    description:
-      'Pengenalan air, keberanian, mengapung, meluncur, dan teknik dasar renang untuk anak yang baru memulai.',
-    icon: Sprout,
-    audience: 'Usia 4+ • Pemula',
-    schedule: '2x per minggu',
-    price: 'Mulai Rp 550 rb/bulan',
-    features: ['Asesmen level awal', 'Kelompok kecil maks. 10 siswa', 'Fokus keamanan & kepercayaan diri'],
-    gradientClassName: 'from-[#0066CC] to-cyan-400',
-  },
-  {
-    code: 'A3',
-    name: 'A3 Menengah',
-    tagline: 'Teknik makin rapi',
-    description:
-      'Pengembangan gaya bebas, gaya dada, endurance, start, dan pembalikan untuk siswa yang sudah menguasai dasar.',
-    icon: TrendingUp,
-    audience: 'Sudah bisa dasar renang',
-    schedule: '2x per minggu',
-    price: 'Mulai Rp 600 rb/bulan',
-    features: ['Klinik teknik gaya', 'Latihan endurance bertahap', 'Evaluasi kesiapan naik level'],
-    gradientClassName: 'from-cyan-600 to-sky-400',
-  },
-  {
-    code: 'SWDC',
-    name: 'SWDC Atlet',
-    tagline: 'Siap menuju podium',
-    description:
-      'Program prestasi dengan periodisasi latihan, race pace, dryland, pencatatan waktu, dan simulasi kompetisi.',
-    icon: Trophy,
-    audience: 'Atlet & jalur kompetisi',
-    schedule: '3-5x per minggu',
-    price: 'Paket semester tersedia',
-    features: ['Program latihan terperiodisasi', 'Dryland dan simulasi lomba', 'Monitoring catatan waktu'],
-    gradientClassName: 'from-indigo-700 to-blue-500',
-  },
-  {
-    code: 'PRIVATE',
-    name: 'Private 1-on-1',
-    tagline: 'Fokus sesuai kebutuhan',
-    description:
-      'Sesi personal bersama satu pelatih untuk target khusus, jadwal fleksibel, atau anak yang membutuhkan pendampingan ekstra.',
-    icon: User,
-    audience: 'Semua level • Fleksibel',
-    schedule: 'Jadwal berdasarkan booking',
-    price: 'Voucher 4 sesi tersedia',
-    features: ['Satu siswa satu pelatih', 'Materi dipersonalisasi', 'Pilihan slot lebih fleksibel'],
-    gradientClassName: 'from-slate-800 to-blue-600',
-  },
-];
-
-const academyFeatures = [
-  {
-    icon: ShieldCheck,
-    title: 'Keamanan Terstruktur',
-    description: 'Progres bertahap sesuai kesiapan anak dan pengawasan pelatih di setiap sesi.',
-  },
-  {
-    icon: Users,
-    title: 'Kelompok Kecil',
-    description: 'Kapasitas kelas dibatasi agar setiap siswa mendapat perhatian yang cukup.',
-  },
-  {
-    icon: BadgeCheck,
-    title: 'Kurikulum Bertahap',
-    description: 'Target belajar jelas dari pemula hingga jalur prestasi dan kompetisi.',
-  },
-  {
-    icon: CalendarDays,
-    title: 'Pilihan Jadwal Fleksibel',
-    description: 'Tersedia kelas weekday, weekend, dan slot private di kolam partner.',
-  },
-];
+const FEATURE_ICONS = {
+  'shield-check': ShieldCheck,
+  users: Users,
+  'badge-check': BadgeCheck,
+  'calendar-days': CalendarDays,
+};
 
 const categoryGradients = {
   'Tips Renang': 'from-[#0066CC] to-cyan-400',
@@ -128,6 +64,37 @@ const categoryGradients = {
   Promo: 'from-amber-500 to-orange-400',
   Event: 'from-cyan-700 to-sky-400',
 };
+
+const PROGRAM_ICONS = {
+  AAA: Sprout,
+  A3: TrendingUp,
+  SWDC: Trophy,
+  PRIVATE: User,
+  sprout: Sprout,
+  'trending-up': TrendingUp,
+  trophy: Trophy,
+  user: User,
+};
+
+function formatPhoneHref(phone) {
+  const digits = String(phone ?? '').replace(/\D/g, '');
+  if (!digits) return '';
+  return `tel:+${digits.startsWith('0') ? `62${digits.slice(1)}` : digits}`;
+}
+
+function formatOperatingHours(hours = []) {
+  const openDays = hours.filter((item) => item.isOpen);
+  if (!openDays.length) return 'Hubungi admin untuk jam operasional';
+
+  const starts = openDays.map((item) => item.start).sort();
+  const ends = openDays.map((item) => item.end).sort();
+  const dayNames = openDays.map((item) => item.day);
+  const dayLabel = dayNames.length === 7
+    ? 'Senin-Minggu'
+    : `${dayNames[0]}-${dayNames[dayNames.length - 1]}`;
+
+  return `${dayLabel} • ${starts[0]}-${ends[ends.length - 1]} WIB`;
+}
 
 function formatDate(value) {
   return new Intl.DateTimeFormat('id-ID', {
@@ -213,11 +180,33 @@ function ArticleImage({ article }) {
 }
 
 export default async function HomePage() {
-  const [promos, articles, currentYear] = await Promise.all([
+  const [
+    promos,
+    articles,
+    programs,
+    testimonials,
+    faqItems,
+    settings,
+    landingStats,
+    currentYear,
+  ] = await Promise.all([
     getPromos({ limit: 3 }),
     getArticles({ limit: 3 }),
+    getLandingPrograms(),
+    getTestimonials(),
+    getFaqItems(),
+    getLandingSettings(),
+    getLandingStats(),
     getCurrentYear(),
   ]);
+  const heroStats = landingStats.slice(0, 3);
+  const academyFeatures = settings?.academyFeatures ?? [];
+  const businessName = settings?.businessName || 'AAA Sport Academy';
+  const phoneHref = formatPhoneHref(settings?.phone);
+  const operatingHoursLabel = formatOperatingHours(settings?.operatingHours);
+  const venueLabel = settings?.venueNames?.length
+    ? settings.venueNames.join(' & ')
+    : settings?.address || 'Tempat latihan diumumkan oleh admin';
 
   return (
     <>
@@ -228,7 +217,7 @@ export default async function HomePage() {
         Lewati ke konten
       </a>
 
-      <LandingNavbar />
+      <LandingNavbar businessName={businessName} tagline={settings?.tagline || "Swimming Academy"} logoDataUrl={settings?.logoDataUrl || ""} />
 
       <main id="konten">
         {/* ------------------------------------------------------------------ */}
@@ -273,11 +262,7 @@ export default async function HomePage() {
               </div>
 
               <dl className="mt-10 grid max-w-xl grid-cols-3 divide-x divide-blue-100 rounded-3xl border border-blue-100 bg-white/85 py-4 shadow-sm backdrop-blur">
-                {[
-                  ['248+', 'Siswa Terbimbing'],
-                  ['4', 'Jalur Program'],
-                  ['2', 'Kolam Partner'],
-                ].map(([value, label]) => (
+                {heroStats.map(({ displayValue: value, label }) => (
                   <div key={label} className="px-3 text-center sm:px-5">
                     <dt className="order-2 mt-1 block text-[11px] font-semibold leading-tight text-slate-500 sm:text-xs">
                       {label}
@@ -323,9 +308,10 @@ export default async function HomePage() {
             </div>
           </div>
 
+          {academyFeatures.length ? (
           <div className="relative mx-auto grid w-full max-w-7xl gap-3 px-4 pb-14 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
             {academyFeatures.map((feature) => {
-              const Icon = feature.icon;
+              const Icon = FEATURE_ICONS[feature.iconKey] ?? ShieldCheck;
               return (
                 <article key={feature.title} className="flex gap-3 rounded-3xl border border-blue-50 bg-white p-4 shadow-sm">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#0066CC]">
@@ -339,6 +325,7 @@ export default async function HomePage() {
               );
             })}
           </div>
+          ) : null}
         </section>
 
         {/* ------------------------------------------------------------------ */}
@@ -398,7 +385,9 @@ export default async function HomePage() {
                             {formatShortDate(promo.startsAt)} - {formatShortDate(promo.endsAt)}
                           </p>
                           <p>
-                            Minimum transaksi {formatRupiah(promo.minimumPurchase)}. {promo.terms}
+                            {promo.minimumPurchase
+                              ? `Minimum transaksi ${formatRupiah(promo.minimumPurchase)}. `
+                              : ''}{promo.terms}
                           </p>
                         </div>
 
@@ -439,9 +428,10 @@ export default async function HomePage() {
               description="Kurikulum disusun bertahap dan dievaluasi berkala, sehingga siswa naik level ketika teknik serta kepercayaan dirinya sudah siap."
             />
 
+            {programs.length ? (
             <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               {programs.map((program) => {
-                const Icon = program.icon;
+                const Icon = PROGRAM_ICONS[program.iconKey] ?? PROGRAM_ICONS[program.code] ?? Waves;
 
                 return (
                   <article
@@ -492,6 +482,13 @@ export default async function HomePage() {
               })}
             </div>
 
+            ) : (
+              <div className="mx-auto mt-12 max-w-xl rounded-3xl bg-white px-6 py-10 text-center shadow-lg shadow-blue-950/5">
+                <h3 className="font-extrabold text-slate-900">Program belum tersedia</h3>
+                <p className="mt-2 text-sm text-slate-500">Konten program belum diaktifkan di database. Hubungi admin untuk informasi kelas terbaru.</p>
+              </div>
+            )}
+
             <div className="mx-auto mt-10 grid max-w-5xl gap-3 rounded-[28px] bg-slate-950 px-5 py-6 text-white sm:grid-cols-4 sm:px-7">
               {[
                 ['01', 'Konsultasi', 'Ceritakan usia dan pengalaman anak.'],
@@ -519,9 +516,15 @@ export default async function HomePage() {
               title="Cerita Orang Tua dan Siswa AAA"
               description="Kepercayaan keluarga dibangun dari progres yang terlihat, komunikasi yang jelas, dan pengalaman belajar yang menyenangkan."
             />
-            <div className="mt-12">
-              <TestimonialSlider />
-            </div>
+            {testimonials.length ? (
+              <div className="mt-12">
+                <TestimonialSlider testimonials={testimonials} />
+              </div>
+            ) : (
+              <div className="mx-auto mt-12 max-w-xl rounded-3xl bg-blue-50 px-6 py-10 text-center text-sm text-slate-500">
+                Testimoni terverifikasi belum tersedia di database.
+              </div>
+            )}
           </div>
         </section>
 
@@ -546,6 +549,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
+            {articles.length ? (
             <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {articles.map((article) => (
                 <article
@@ -591,6 +595,12 @@ export default async function HomePage() {
                 </article>
               ))}
             </div>
+            ) : (
+              <div className="mx-auto mt-12 max-w-xl rounded-3xl bg-white px-6 py-10 text-center shadow-lg shadow-blue-950/5">
+                <h3 className="font-extrabold text-slate-900">Artikel belum tersedia</h3>
+                <p className="mt-2 text-sm text-slate-500">Artikel terpublikasi dari Content Hub akan muncul di sini.</p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -623,7 +633,7 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <FaqAccordion />
+            <FaqAccordion items={faqItems} />
           </div>
         </section>
 
@@ -663,19 +673,25 @@ export default async function HomePage() {
                 ))}
               </ul>
 
-              <div className="mt-9 flex flex-wrap gap-3 text-sm font-semibold">
-                <a href="tel:+6281234567890" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 ring-1 ring-white/15 transition hover:bg-white/15">
-                  <Phone className="h-4 w-4" />
-                  +62 812-3456-7890
-                </a>
-                <a href="mailto:halo@aaasport.academy" className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 ring-1 ring-white/15 transition hover:bg-white/15">
-                  <Mail className="h-4 w-4" />
-                  halo@aaasport.academy
-                </a>
-              </div>
+              {(settings?.phone || settings?.email) ? (
+                <div className="mt-9 flex flex-wrap gap-3 text-sm font-semibold">
+                  {settings?.phone ? (
+                    <a href={phoneHref} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 ring-1 ring-white/15 transition hover:bg-white/15">
+                      <Phone className="h-4 w-4" />
+                      {settings.phone}
+                    </a>
+                  ) : null}
+                  {settings?.email ? (
+                    <a href={`mailto:${settings.email}`} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 ring-1 ring-white/15 transition hover:bg-white/15">
+                      <Mail className="h-4 w-4" />
+                      {settings.email}
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
-            <RegistrationCta />
+            <RegistrationCta programs={programs} venues={settings?.venues ?? []} contactPhone={settings?.phone || ""} />
           </div>
         </section>
       </main>
@@ -688,39 +704,18 @@ export default async function HomePage() {
           <div className="grid gap-10 border-t border-white/10 py-12 md:grid-cols-2 xl:grid-cols-[1.4fr_0.8fr_0.8fr_1fr]">
             <div>
               <Link href="#beranda" className="flex items-center gap-3 text-white">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0066CC]">
-                  <Waves className="h-6 w-6" />
+                <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-[#0066CC]">
+                  {settings?.logoDataUrl ? <img src={settings.logoDataUrl} alt="" className="h-full w-full bg-white object-contain p-1" /> : <Waves className="h-6 w-6" />}
                 </span>
                 <span>
-                  <span className="block font-extrabold leading-tight">AAA Sport Academy</span>
-                  <span className="block text-xs text-slate-400">Swimming Academy</span>
+                  <span className="block font-extrabold leading-tight">{businessName}</span>
+                  <span className="block text-xs text-slate-400">{settings?.tagline || 'Swimming Academy'}</span>
                 </span>
               </Link>
               <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-400">
                 Sekolah renang untuk pemula, menengah, atlet, dan private dengan pembelajaran
                 bertahap yang aman, terukur, dan menyenangkan.
               </p>
-              <div className="mt-5 flex gap-2">
-                {[
-                  { label: 'Instagram AAA Sport Academy', href: 'https://instagram.com', icon: InstagramIcon },
-                  { label: 'YouTube AAA Sport Academy', href: 'https://youtube.com', icon: YoutubeIcon },
-                  { label: 'Facebook AAA Sport Academy', href: 'https://facebook.com', icon: FacebookIcon },
-                ].map((social) => {
-                  const Icon = social.icon;
-                  return (
-                    <a
-                      key={social.label}
-                      href={social.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={social.label}
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-[#0066CC]"
-                    >
-                      <Icon className="h-5 w-5" />
-                    </a>
-                  );
-                })}
-              </div>
             </div>
 
             <nav aria-label="Program AAA Sport Academy">
@@ -752,26 +747,26 @@ export default async function HomePage() {
               <ul className="mt-4 space-y-3.5 text-sm leading-relaxed">
                 <li className="flex gap-3">
                   <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
-                  <span>Kolam Tirta Segara & Aqua Center<br />Jakarta, Indonesia</span>
+                  <span>{venueLabel}{settings?.address ? <><br />{settings.address}</> : null}</span>
                 </li>
                 <li className="flex gap-3">
                   <Phone className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
-                  <a href="tel:+6281234567890" className="transition-colors hover:text-cyan-300">+62 812-3456-7890</a>
+                  {settings?.phone ? <a href={phoneHref} className="transition-colors hover:text-cyan-300">{settings.phone}</a> : <span>Nomor WhatsApp belum diatur</span>}
                 </li>
                 <li className="flex gap-3">
                   <Mail className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
-                  <a href="mailto:halo@aaasport.academy" className="transition-colors hover:text-cyan-300">halo@aaasport.academy</a>
+                  {settings?.email ? <a href={`mailto:${settings.email}`} className="transition-colors hover:text-cyan-300">{settings.email}</a> : <span>Email belum diatur</span>}
                 </li>
                 <li className="flex gap-3">
                   <Clock className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
-                  <span>Senin-Minggu<br />05.30-19.00 WIB</span>
+                  <span>{operatingHoursLabel}</span>
                 </li>
               </ul>
             </div>
           </div>
 
           <div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-center text-xs text-slate-500 sm:flex-row sm:text-left">
-            <p>© {currentYear} AAA Sport Academy. Seluruh hak cipta dilindungi.</p>
+            <p>© {currentYear} {businessName}. Seluruh hak cipta dilindungi.</p>
             <p>Belajar aman • Bertumbuh percaya diri • Berprestasi di air</p>
           </div>
         </div>

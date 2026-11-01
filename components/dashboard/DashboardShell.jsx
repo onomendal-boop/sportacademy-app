@@ -2,18 +2,20 @@
 
 import Link from 'next/link';
 import {
-  Bell,
   ChevronDown,
   CircleUserRound,
   Loader2,
   LogOut,
   Menu,
-  Search,
   Settings,
   Waves,
   X,
 } from 'lucide-react';
+import useDashboardNotifications from '@/hooks/useDashboardNotifications';
 import useDashboardShell from '@/hooks/useDashboardShell';
+import GlobalSearch from './GlobalSearch';
+import NotificationMenu from './NotificationMenu';
+import { PROGRAM_SCOPE_LABELS } from '@/lib/auth/permissions';
 import {
   filterMenuByRole,
   hasActiveChild,
@@ -31,6 +33,15 @@ const ROLE_LABELS = {
 
 function cn(...classes) {
   return classes.filter(Boolean).join(' ');
+}
+
+function getRoleLabel(user) {
+  const baseLabel = ROLE_LABELS[user?.role] ?? user?.role ?? 'User';
+  const scopeLabel = user?.programScope
+    ? PROGRAM_SCOPE_LABELS[user.programScope]
+    : null;
+
+  return scopeLabel ? `${baseLabel} • ${scopeLabel}` : baseLabel;
 }
 
 function getInitials(name = '') {
@@ -69,10 +80,10 @@ function UserAvatar({ user, className = '' }) {
   );
 }
 
-function SidebarContent({ user, isLoggingOut, pathname, openMenus, onToggleMenu, onNavigate, onLogout }) {
-  const roleLabel = ROLE_LABELS[user?.role] ?? user?.role ?? 'User';
+function SidebarContent({ user, isLoggingOut, pathname, openMenus, leadBadgeCount = 0, onToggleMenu, onNavigate, onLogout }) {
+  const roleLabel = getRoleLabel(user);
   // Fitur yang bukan hak role ini disembunyikan dari sidebar.
-  const visibleMenuItems = filterMenuByRole(menuItems, user?.role);
+  const visibleMenuItems = filterMenuByRole(menuItems, user);
   return (
     <div className="flex h-full flex-col bg-white">
       {/* Logo */}
@@ -162,6 +173,9 @@ function SidebarContent({ user, isLoggingOut, pathname, openMenus, onToggleMenu,
                       {item.children.map((child) => {
                         const ChildIcon = child.icon;
                         const isChildActive = isActivePath(pathname, child.href);
+                        const badgeCount =
+                          child.badgeKey === 'newLeads' ? leadBadgeCount : 0;
+                        const badgeLabel = badgeCount > 99 ? '99+' : badgeCount;
 
                         return (
                           <li key={child.href}>
@@ -185,9 +199,9 @@ function SidebarContent({ user, isLoggingOut, pathname, openMenus, onToggleMenu,
                               <ChildIcon className="h-4 w-4 shrink-0" strokeWidth={2} />
                               <span className="min-w-0 flex-1 truncate">{child.label}</span>
 
-                              {child.badge ? (
+                              {badgeCount > 0 ? (
                                 <span className="shrink-0 rounded-full bg-[#0066CC] px-2 py-0.5 text-[11px] font-bold text-white">
-                                  {child.badge}
+                                  {badgeLabel}
                                 </span>
                               ) : null}
                             </Link>
@@ -238,9 +252,9 @@ function SidebarContent({ user, isLoggingOut, pathname, openMenus, onToggleMenu,
 /**
  * Komponen tampilan dashboard.
  * State dan fungsi interaktif berasal dari useDashboardShell.
- * User berasal dari auth guard Server Component, bukan mock client.
+ * User berasal dari auth guard Server Component, bukan data client statis.
  */
-export default function DashboardShell({ user, children }) {
+export default function DashboardShell({ user, initialLeadBadgeCount = 0, children }) {
   const {
     pathname,
     pageTitle,
@@ -255,8 +269,11 @@ export default function DashboardShell({ user, children }) {
     onToggleMenu,
     onLogout,
   } = useDashboardShell();
+  const notificationState = useDashboardNotifications({
+    initialLeadCount: initialLeadBadgeCount,
+  });
 
-  const roleLabel = ROLE_LABELS[user?.role] ?? user?.role ?? 'User';
+  const roleLabel = getRoleLabel(user);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 antialiased">
@@ -267,6 +284,7 @@ export default function DashboardShell({ user, children }) {
           isLoggingOut={isLoggingOut}
           pathname={pathname}
           openMenus={openMenus}
+          leadBadgeCount={notificationState.leadCount}
           onToggleMenu={onToggleMenu}
           onNavigate={() => {}}
           onLogout={onLogout}
@@ -306,6 +324,7 @@ export default function DashboardShell({ user, children }) {
             isLoggingOut={isLoggingOut}
             pathname={pathname}
             openMenus={openMenus}
+            leadBadgeCount={notificationState.leadCount}
             onToggleMenu={onToggleMenu}
             onNavigate={onCloseMobileSidebar}
             onLogout={onLogout}
@@ -337,27 +356,11 @@ export default function DashboardShell({ user, children }) {
             </p>
           </div>
 
-          {/* Search - desktop */}
-          <div className="relative hidden w-64 md:block xl:w-80">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="search"
-              placeholder="Cari siswa, pelatih, jadwal..."
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#0066CC] focus:bg-white focus:ring-4 focus:ring-blue-600/10"
-            />
-          </div>
+          {/* Pencarian global database */}
+          <GlobalSearch />
 
-          {/* Notifikasi */}
-          <button
-            type="button"
-            aria-label="Notifikasi"
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-colors hover:bg-blue-50 hover:text-[#0066CC]"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-              3
-            </span>
-          </button>
+          {/* Notifikasi tindak lanjut dari database */}
+          <NotificationMenu {...notificationState} />
 
           {/* Avatar + Dropdown Profil */}
           <div ref={profileRef} className="relative shrink-0">

@@ -58,9 +58,9 @@ const PROGRAM_ICONS = {
 };
 
 const EXPECTED_SPECIALIZATION = {
-  AAA: 'Pemula',
-  A3: 'Menengah',
-  SWDC: 'Atlet',
+  AAA: 'AAA Sport Academy',
+  A3: 'A3',
+  SWDC: 'SWDC Swimmer',
   PRIVATE: 'Private',
 };
 
@@ -91,6 +91,7 @@ function ScheduleSlotCard({
   canManage,
   canBook,
   currentStudentId,
+  programScope,
   onAssignCoach,
   onBookPrivate,
   onCancelBooking,
@@ -103,8 +104,14 @@ function ScheduleSlotCard({
       : 0;
   const isOwnBooking =
     Boolean(currentStudentId) && occurrence.bookedStudent?.id === currentStudentId;
+  const isScopedProgramBooking =
+    Boolean(programScope) && occurrence.bookedStudent?.level === programScope;
+  const canCancelBooking =
+    canManage || isOwnBooking || isScopedProgramBooking;
   const canShowActions =
-    canManage || (canBook && isPrivate && status.remaining > 0) || isOwnBooking;
+    canManage ||
+    (canBook && isPrivate && status.remaining > 0) ||
+    canCancelBooking;
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-900/[0.02] transition hover:border-blue-200 hover:shadow-md hover:shadow-blue-600/5">
@@ -166,8 +173,9 @@ function ScheduleSlotCard({
               {occurrence.bookedStudent.name}
             </p>
             <p className="text-[11px] text-slate-500">
-              {isOwnBooking ? 'Booking Anda' : 'Siswa terbooking'} • Level{' '}
-              {occurrence.bookedStudent.level}
+              {isOwnBooking ? 'Booking Anda' : 'Siswa terbooking'} •{' '}
+              {PROGRAM_CONFIG[occurrence.bookedStudent.level]?.title ??
+                occurrence.bookedStudent.level}
             </p>
           </div>
         </div>
@@ -222,7 +230,7 @@ function ScheduleSlotCard({
             </button>
           ) : null}
 
-          {(canManage || isOwnBooking) && isPrivate && occurrence.bookedStudent ? (
+          {canCancelBooking && isPrivate && occurrence.bookedStudent ? (
             <button
               type="button"
               onClick={() => onCancelBooking(occurrence)}
@@ -244,12 +252,14 @@ export default function ScheduleCalendar({
   canManage = false,
   canBook = false,
   currentStudentId = null,
+  programScope = null,
 }) {
   const calendar = useScheduleCalendar({
     program: programConfig.code,
     canManage,
     canBook,
     currentStudentId,
+    programScope,
   });
 
   const {
@@ -284,6 +294,12 @@ export default function ScheduleCalendar({
   const bookingCoachOptions = coaches.filter(
     (coach) => coach.isActive || coach.id === bookingForm.coachId
   );
+  const visibleProgramConfigs = programScope
+    ? Object.values(PROGRAM_CONFIG).filter(
+        (config) =>
+          config.code === programScope || config.code === 'PRIVATE'
+      )
+    : Object.values(PROGRAM_CONFIG);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -309,9 +325,14 @@ export default function ScheduleCalendar({
 
         <nav
           aria-label="Pilih level jadwal"
-          className="grid shrink-0 grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm shadow-slate-900/[0.02] sm:grid-cols-4 xl:min-w-[520px]"
+          className={cn(
+            'grid shrink-0 grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm shadow-slate-900/[0.02]',
+            programScope
+              ? 'xl:min-w-[300px]'
+              : 'sm:grid-cols-4 xl:min-w-[520px]'
+          )}
         >
-          {Object.values(PROGRAM_CONFIG).map((config) => {
+          {visibleProgramConfigs.map((config) => {
             const Icon = PROGRAM_ICONS[config.code] ?? CalendarDays;
             const isActive = config.code === programConfig.code;
 
@@ -335,7 +356,20 @@ export default function ScheduleCalendar({
         </nav>
       </section>
 
-      {!canManage && canBook ? (
+      {!canManage && programScope ? (
+        <div className="flex gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-relaxed text-slate-600">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#0066CC]" aria-hidden="true" />
+          <p>
+            <span className="font-bold text-slate-900">
+              Mode admin {PROGRAM_CONFIG[programScope].title}:
+            </span>{' '}
+            Anda mengelola jadwal {PROGRAM_CONFIG[programScope].title} dan
+            booking Private untuk siswa pada level tersebut. Template
+            Private serta jadwal program lain tidak ditampilkan untuk
+            dikelola dari akun ini.
+          </p>
+        </div>
+      ) : !canManage && canBook ? (
         <div className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-slate-600">
           <Info className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
           <p>
@@ -356,9 +390,11 @@ export default function ScheduleCalendar({
             <span className="font-bold text-slate-900">Booking Private:</span>{' '}
             {canManage
               ? 'pilih slot kosong, tentukan siswa dan pelatih. Booking disimpan sebagai slot tanggal nyata di database.'
-              : canBook
-                ? 'pilih slot kosong lalu tentukan pelatih. Booking otomatis dibuat atas nama profil siswa dari akun Anda.'
-                : 'booking dikelola oleh tim operasional akademi.'}
+              : programScope
+                ? `pilih slot kosong, siswa ${PROGRAM_CONFIG[programScope].title}, dan pelatih. Booking siswa dari program lain tidak ditampilkan kepada akun ini.`
+                : canBook
+                  ? 'pilih slot kosong lalu tentukan pelatih. Booking otomatis dibuat atas nama profil siswa dari akun Anda.'
+                  : 'booking dikelola oleh tim operasional akademi.'}
           </p>
         ) : (
           <p>
@@ -473,6 +509,7 @@ export default function ScheduleCalendar({
                               canManage={canManage}
                               canBook={canBook}
                               currentStudentId={currentStudentId}
+                              programScope={programScope}
                               onAssignCoach={calendar.onOpenAssignment}
                               onBookPrivate={calendar.onOpenBooking}
                               onCancelBooking={calendar.onCancelBookingRequest}
@@ -616,7 +653,7 @@ export default function ScheduleCalendar({
                 <option value="">Pilih siswa aktif</option>
                 {students.map((student) => (
                   <option key={student.id} value={student.id}>
-                    {student.name} • Level {student.level}
+                    {student.name} • {PROGRAM_CONFIG[student.level]?.title ?? student.level}
                   </option>
                 ))}
               </select>

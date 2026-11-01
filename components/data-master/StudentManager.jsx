@@ -18,7 +18,7 @@ import {
 import useStudentManager from '@/hooks/useStudentManager';
 import {
   STUDENT_LEVEL_LABELS,
-  STUDENT_LEVEL_OPTIONS,
+  getStudentLevelOptionsForScope,
   STUDENT_STATUS_LABELS,
   STUDENT_STATUS_OPTIONS,
 } from '@/lib/data-master/constants';
@@ -65,8 +65,17 @@ export default function StudentManager({
   initialStudents = [],
   canManage = false,
   canDelete = false,
+  programScope = null,
+  initialSearch = '',
 }) {
-  const manager = useStudentManager(initialStudents, canManage, canDelete);
+  const manager = useStudentManager(
+    initialStudents,
+    canManage,
+    canDelete,
+    programScope,
+    initialSearch
+  );
+  const levelOptions = getStudentLevelOptionsForScope(programScope);
   const {
     filteredStudents,
     stats,
@@ -86,7 +95,11 @@ export default function StudentManager({
     <div className="space-y-6">
       <DataMasterHeader
         title="Siswa"
-        description="Kelola siswa AAA, A3, dan SWDC beserta kontak orang tua/wali serta informasi kesehatan dasar untuk keselamatan latihan."
+        description={
+          programScope
+            ? `Kelola siswa program ${STUDENT_LEVEL_LABELS[programScope]} beserta kontak orang tua/wali serta informasi kesehatan dasar untuk keselamatan latihan.`
+            : 'Kelola siswa AAA Sport Academy, A3, dan SWDC Swimmer beserta kontak orang tua/wali serta informasi kesehatan dasar untuk keselamatan latihan.'
+        }
         addLabel="Tambah Siswa"
         canManage={canManage}
         onAdd={manager.onCreate}
@@ -101,27 +114,33 @@ export default function StudentManager({
           value={stats.total}
           description={`${stats.active} aktif • ${stats.pending} menunggu`}
         />
+        {!programScope || programScope === 'AAA' ? (
         <StatCard
           icon={Waves}
-          label="Level AAA"
+          label="AAA Sport Academy"
           value={stats.AAA}
-          description="Program pemula"
+          description="Siswa AAA Sport Academy"
           tone="blue"
         />
+        ) : null}
+        {!programScope || programScope === 'A3' ? (
         <StatCard
           icon={TrendingUp}
-          label="Level A3"
+          label="A3"
           value={stats.A3}
-          description="Program menengah"
+          description="Siswa A3"
           tone="violet"
         />
+        ) : null}
+        {!programScope || programScope === 'SWDC' ? (
         <StatCard
           icon={Trophy}
-          label="Level SWDC"
+          label="SWDC Swimmer"
           value={stats.SWDC}
-          description="Program atlet/prestasi"
+          description="Siswa SWDC Swimmer"
           tone="amber"
         />
+        ) : null}
       </div>
 
       <DataMasterToolbar
@@ -136,7 +155,7 @@ export default function StudentManager({
           aria-label="Filter level siswa"
         >
           <option value="ALL">Semua Level</option>
-          {STUDENT_LEVEL_OPTIONS.map((level) => (
+          {levelOptions.map((level) => (
             <option key={level.value} value={level.value}>
               {level.label}
             </option>
@@ -391,7 +410,7 @@ export default function StudentManager({
               disabled={isSaving}
               className={inputClassName(Boolean(formErrors.level))}
             >
-              {STUDENT_LEVEL_OPTIONS.map((level) => (
+              {levelOptions.map((level) => (
                 <option key={level.value} value={level.value}>
                   {level.label}
                 </option>

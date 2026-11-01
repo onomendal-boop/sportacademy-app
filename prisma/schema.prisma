@@ -40,20 +40,37 @@ model User {
   profileImage String? @map("profile_image") @db.VarChar(500)
   role         UserRole @default(STUDENT)
 
-  // Khusus pengguna COACH, contoh: Pemula, Menengah, Atlet.
+  // Khusus ADMIN program. Nilai ini membatasi Operasional dan Finance
+  // yang dapat dikelola akun tersebut ke satu program/level. Kosong
+  // untuk SUPERADMIN/OWNER global serta COACH dan STUDENT.
+  programScope StudentLevel? @map("program_scope")
+
+  // Khusus pengguna COACH, contoh: AAA Sport Academy, A3, SWDC Swimmer.
   specialization String? @db.VarChar(30)
 
   isActive Boolean @default(true) @map("is_active")
+
+  // Versi sesi untuk mencabut token lama. Nilai ini dinaikkan setiap
+  // password diganti/direset; token yang membawa versi berbeda ditolak
+  // saat user diverifikasi ulang dari database.
+  tokenVersion Int @default(0) @map("token_version")
 
   studentProfile   Student?          @relation("UserStudentProfile")
   staffProfile     Staff?            @relation("UserStaffProfile")
   coachAssignments CoachAssignment[] @relation("CoachAssignments")
   studentReports   StudentReport[]   @relation("ReportCoach")
+  notificationReads NotificationRead[] @relation("UserNotificationReads")
+  authoredArticles  Article[]         @relation("ArticleAuthor")
+  assignedLeads     Lead[]            @relation("LeadAssignee")
+  leadActivities    LeadActivity[]    @relation("LeadActivityActor")
+  systemSettings    SystemSetting[]   @relation("SystemSettingUpdatedBy")
+  databaseBackups   DatabaseBackup[]  @relation("DatabaseBackupCreator")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([role])
+  @@index([programScope])
   @@index([isActive])
   @@map("users")
 }
@@ -216,7 +233,7 @@ enum CoachAssignmentStatus {
 model Schedule {
   id String @id @default(cuid())
 
-  // Contoh: "AAA Pemula - Senin Sore" atau "Private - Sabtu Pagi".
+  // Contoh: "AAA Sport Academy - Senin Sore" atau "Private - Sabtu Pagi".
   title String @db.VarChar(120)
 
   program   ScheduleProgram
@@ -712,14 +729,16 @@ model Article {
   category String @db.VarChar(80)
   tags     Json?
 
-  featuredImageUrl String? @map("featured_image_url") @db.VarChar(500)
+  // LongText agar URL eksternal maupun data URL hasil upload editor dapat
+  // disimpan penuh di database tanpa terpotong batas VarChar lama.
+  featuredImageUrl String? @map("featured_image_url") @db.LongText
   featuredImageAlt String? @map("featured_image_alt") @db.VarChar(180)
 
   seoTitle       String? @map("seo_title") @db.VarChar(180)
   seoDescription String? @map("seo_description") @db.VarChar(320)
 
-  // Nantinya hubungkan authorId ke model User.
   authorId   String? @map("author_id")
+  author     User?   @relation("ArticleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   authorName String  @map("author_name") @db.VarChar(100)
 
   status      ArticleStatus @default(DRAFT)
@@ -757,8 +776,8 @@ model Lead {
   status   LeadStatus   @default(NEW)
   priority LeadPriority @default(MEDIUM)
 
-  // Nantinya hubungkan assignedToId ke model User/staff penanggung jawab.
   assignedToId String? @map("assigned_to_id")
+  assignedTo   User?   @relation("LeadAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   lastContactedAt DateTime? @map("last_contacted_at")
   nextFollowUpAt  DateTime? @map("next_follow_up_at")
@@ -769,6 +788,8 @@ model Lead {
 
   internalNotes String? @map("internal_notes") @db.Text
 
+  activities LeadActivity[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -778,6 +799,196 @@ model Lead {
   @@index([program])
   @@index([nextFollowUpAt])
   @@index([status, nextFollowUpAt])
+  @@index([assignedToId])
   @@index([convertedStudentId])
   @@map("leads")
+}
+model NotificationRead {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation("UserNotificationReads", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Kunci deterministik notifikasi yang diturunkan dari record sumber,
+  // misalnya `transaction-pending:<transactionId>` atau
+  // `subscription-expiring:<subscriptionId>:<expiresAtISO>`.
+  notificationKey String @map("notification_key") @db.VarChar(180)
+
+  readAt DateTime @default(now()) @map("read_at")
+
+  @@unique([userId, notificationKey])
+  @@index([userId, readAt])
+  @@map("notification_reads")
+}
+
+
+model LoginRateLimit {
+  id String @id @default(cuid())
+
+  // HMAC-SHA256 dari cakupan bucket (IP atau IP + username ternormalisasi).
+  // IP dan username mentah tidak disimpan pada tabel rate limit.
+  keyHash String @unique @map("key_hash") @db.Char(64)
+
+  attempts        Int       @default(0)
+  windowStartedAt DateTime  @default(now()) @map("window_started_at")
+  blockedUntil    DateTime? @map("blocked_until")
+
+  // Waktu bucket aman dibersihkan: akhir jendela hitung atau akhir blokir,
+  // mana yang lebih lama.
+  expiresAt DateTime @map("expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([expiresAt])
+  @@index([blockedUntil])
+  @@map("login_rate_limits")
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* FULL DATABASE CONTENT, SETTINGS & BACKUP                                   */
+/* -------------------------------------------------------------------------- */
+
+enum LeadActivityType {
+  NOTE
+  STATUS
+  ASSIGNMENT
+  SYSTEM
+}
+
+model LeadActivity {
+  id String @id @default(cuid())
+
+  leadId String @map("lead_id")
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  actorId String? @map("actor_id")
+  actor   User?   @relation("LeadActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  type        LeadActivityType @default(NOTE)
+  title       String           @db.VarChar(160)
+  description String?          @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([leadId, createdAt])
+  @@index([actorId])
+  @@map("lead_activities")
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+}
+
+// Singleton konfigurasi aplikasi. Baris aktif memakai id "default" dan
+// dibuat oleh seeder; runtime tidak lagi membaca localStorage/default mock.
+model SystemSetting {
+  id String @id @default("default") @db.VarChar(50)
+
+  general      Json
+  financial    Json
+  notification Json
+  siteContent  Json @map("site_content")
+
+  updatedById String? @map("updated_by_id")
+  updatedBy   User?   @relation("SystemSettingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+model NotificationTemplate {
+  id String @id @db.VarChar(100)
+
+  name     String              @db.VarChar(120)
+  channel  NotificationChannel
+  eventKey String              @map("event_key") @db.VarChar(80)
+  subject  String?             @db.Text
+  message  String              @db.LongText
+  isActive Boolean             @default(true) @map("is_active")
+  sortOrder Int                @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([channel, isActive])
+  @@index([eventKey])
+  @@index([sortOrder])
+  @@map("notification_templates")
+}
+
+// Snapshot export database nyata dalam format JSON. Konten snapshot lama
+// sengaja tidak ikut diekspor ulang oleh backup berikutnya agar ukuran file
+// tidak tumbuh rekursif; metadata backup tetap tercatat.
+model DatabaseBackup {
+  id String @id @default(cuid())
+
+  fileName  String @unique @map("file_name") @db.VarChar(180)
+  format    String @default("JSON") @db.VarChar(20)
+  sizeBytes Int    @map("size_bytes")
+  content   String @db.LongText
+
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation("DatabaseBackupCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([createdById])
+  @@map("database_backups")
+}
+
+model ProgramContent {
+  id String @id @default(cuid())
+
+  program       ScheduleProgram @unique
+  tagline       String          @db.VarChar(120)
+  description   String          @db.Text
+  audienceLabel String          @map("audience_label") @db.VarChar(120)
+  scheduleLabel String          @map("schedule_label") @db.VarChar(120)
+  features      Json
+  sortOrder     Int             @default(0) @map("sort_order")
+  isActive      Boolean         @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@map("program_contents")
+}
+
+model Testimonial {
+  id String @id @default(cuid())
+
+  name      String  @db.VarChar(100)
+  roleLabel String  @map("role_label") @db.VarChar(140)
+  quote     String  @db.Text
+  rating    Int     @default(5)
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@map("testimonials")
+}
+
+model FaqItem {
+  id String @id @default(cuid())
+
+  question  String  @unique @db.VarChar(240)
+  answer    String  @db.Text
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@map("faq_items")
 }

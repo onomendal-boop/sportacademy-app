@@ -17,7 +17,7 @@ function cn(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function LandingNavbar() {
+export default function LandingNavbar({ businessName = 'AAA Sport Academy', tagline = 'Swimming Academy', logoDataUrl = '' }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -59,16 +59,20 @@ export default function LandingNavbar() {
           href="#beranda"
           onClick={() => setIsMobileOpen(false)}
           className="flex min-w-0 items-center gap-3"
-          aria-label="AAA Sport Academy - kembali ke beranda"
+          aria-label={`${businessName} - kembali ke beranda`}
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0066CC] text-white shadow-sm shadow-blue-600/30">
-            <Waves className="h-6 w-6" strokeWidth={2.2} />
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#0066CC] text-white shadow-sm shadow-blue-600/30">
+            {logoDataUrl ? (
+              <img src={logoDataUrl} alt="" className="h-full w-full bg-white object-contain p-1" />
+            ) : (
+              <Waves className="h-6 w-6" strokeWidth={2.2} />
+            )}
           </span>
           <span className="min-w-0">
             <span className="block truncate text-[15px] font-extrabold leading-tight text-slate-900">
-              AAA Sport Academy
+              {businessName}
             </span>
-            <span className="block text-xs font-medium text-slate-500">Swimming Academy</span>
+            <span className="block text-xs font-medium text-slate-500">{tagline}</span>
           </span>
         </Link>
 

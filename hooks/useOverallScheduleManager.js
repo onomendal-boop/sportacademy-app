@@ -55,12 +55,18 @@ function mapApiFieldErrors(error) {
 export default function useOverallScheduleManager(
   initialSchedules = [],
   canManage = false,
-  canDelete = false
+  canDelete = false,
+  programScope = null,
+  initialSearch = ''
 ) {
+  const scopedEmptyForm = {
+    ...EMPTY_FORM,
+    program: programScope ?? EMPTY_FORM.program,
+  };
   const [schedules, setSchedules] = useState(() =>
     [...initialSchedules].sort(sortSchedules)
   );
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [programFilter, setProgramFilter] = useState('ALL');
   const [dayFilter, setDayFilter] = useState('ALL');
   const [venueFilter, setVenueFilter] = useState('ALL');
@@ -70,7 +76,7 @@ export default function useOverallScheduleManager(
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
-  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [formData, setFormData] = useState(scopedEmptyForm);
   const [formErrors, setFormErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -146,7 +152,7 @@ export default function useOverallScheduleManager(
   function updateField(name, value) {
     setFormData((current) => ({
       ...current,
-      [name]: value,
+      [name]: name === 'program' && programScope ? programScope : value,
       ...(name === 'program' && value === 'PRIVATE' ? { capacity: '1' } : {}),
     }));
     setFormErrors((current) => ({ ...current, [name]: undefined }));
@@ -155,7 +161,7 @@ export default function useOverallScheduleManager(
   function openCreate() {
     if (!canManage) return;
     setEditingSchedule(null);
-    setFormData(EMPTY_FORM);
+    setFormData(scopedEmptyForm);
     setFormErrors({});
     setIsFormOpen(true);
   }
@@ -193,7 +199,10 @@ export default function useOverallScheduleManager(
     event.preventDefault();
     if (!canManage || isSaving) return;
 
-    const parsed = scheduleSchema.safeParse(formData);
+    const parsed = scheduleSchema.safeParse({
+      ...formData,
+      program: programScope ?? formData.program,
+    });
 
     if (!parsed.success) {
       setFormErrors(getOperationalFieldErrors(parsed.error));
@@ -219,7 +228,7 @@ export default function useOverallScheduleManager(
 
       setIsFormOpen(false);
       setEditingSchedule(null);
-      setFormData(EMPTY_FORM);
+      setFormData(scopedEmptyForm);
       setFormErrors({});
     } catch (error) {
       setFormErrors(mapApiFieldErrors(error));
@@ -249,6 +258,7 @@ export default function useOverallScheduleManager(
   }
 
   return {
+    programScope,
     schedules,
     filteredSchedules,
     schedulesByDay,

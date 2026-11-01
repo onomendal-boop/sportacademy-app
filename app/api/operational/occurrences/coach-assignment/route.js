@@ -15,7 +15,7 @@ import {
 } from '@/lib/validations/operational';
 
 export async function POST(request) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
   if (response) return response;
 
   const { body, response: bodyResponse } = await parseJsonBody(request);
@@ -25,7 +25,7 @@ export async function POST(request) {
   if (!parsed.success) return validationResponse(parsed.error);
 
   try {
-    const occurrence = await assignCoachToOccurrence(parsed.data);
+    const occurrence = await assignCoachToOccurrence(parsed.data, user);
     return NextResponse.json({ data: occurrence });
   } catch (error) {
     return handleOperationalError(error, 'Penugasan pelatih');
@@ -33,7 +33,7 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
   if (response) return response;
 
   const { body, response: bodyResponse } = await parseJsonBody(request);
@@ -43,7 +43,7 @@ export async function DELETE(request) {
   if (!parsed.success) return validationResponse(parsed.error);
 
   try {
-    const occurrence = await removeCoachAssignmentFromOccurrence(parsed.data);
+    const occurrence = await removeCoachAssignmentFromOccurrence(parsed.data, user);
     return NextResponse.json({ data: occurrence });
   } catch (error) {
     return handleOperationalError(error, 'Penugasan pelatih');

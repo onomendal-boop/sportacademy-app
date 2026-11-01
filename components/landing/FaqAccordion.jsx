@@ -3,56 +3,31 @@
 import { useState } from 'react';
 import { ChevronDown, MessageCircle } from 'lucide-react';
 
-const faqs = [
-  {
-    question: 'Anak saya belum pernah belajar renang. Program apa yang cocok?',
-    answer:
-      'Program AAA Pemula adalah titik awal yang paling umum. Pada sesi pertama, pelatih akan menilai keberanian anak di air, kemampuan mengapung, dan kontrol napas, lalu merekomendasikan kelompok yang paling aman.',
-  },
-  {
-    question: 'Apakah tersedia kelas trial sebelum membeli paket?',
-    answer:
-      'Ya. Calon siswa dapat mengikuti trial/asesmen sesuai ketersediaan slot. Setelah trial, orang tua menerima rekomendasi level dan pilihan jadwal sebelum memutuskan paket yang akan diambil.',
-  },
-  {
-    question: 'Apa saja yang perlu dibawa saat latihan pertama?',
-    answer:
-      'Siapkan pakaian renang, topi renang, kacamata renang, handuk, pakaian ganti, botol minum, dan kantong pakaian basah. Untuk anak dengan kondisi kesehatan tertentu, mohon informasikan kepada admin dan pelatih sebelum sesi dimulai.',
-  },
-  {
-    question: 'Bagaimana jika anak berhalangan hadir pada jadwal kelas?',
-    answer:
-      'Kebijakan penggantian kelas mengikuti syarat paket dan ketersediaan slot. Hubungi admin sesegera mungkin sebelum jadwal dimulai agar tim dapat membantu memeriksa opsi reschedule.',
-  },
-  {
-    question: 'Apa perbedaan kelas grup dan Private?',
-    answer:
-      'Kelas grup melatih anak dalam kelompok kecil sesuai level sehingga ada unsur sosial dan permainan bersama. Private bersifat satu siswa dengan satu pelatih, jadwalnya lebih fleksibel, dan materi difokuskan pada kebutuhan individu.',
-  },
-  {
-    question: 'Bagaimana orang tua memantau progres anak?',
-    answer:
-      'Pelatih mencatat perkembangan teknik dan keberanian anak secara berkala. Orang tua dapat berkonsultasi dengan pelatih/admin untuk mengetahui target berikutnya dan kesiapan naik level.',
-  },
-];
-
 function cn(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function FaqAccordion() {
+export default function FaqAccordion({ items = [] }) {
   const [openIndex, setOpenIndex] = useState(0);
+
+  if (items.length === 0) {
+    return (
+      <div className="rounded-[28px] border border-dashed border-blue-200 bg-blue-50 px-6 py-10 text-center text-sm text-slate-500">
+        FAQ belum tersedia. Hubungi admin untuk konsultasi program dan jadwal trial.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
-      {faqs.map((faq, index) => {
+      {items.map((faq, index) => {
         const isOpen = openIndex === index;
         const panelId = `faq-panel-${index}`;
         const buttonId = `faq-button-${index}`;
 
         return (
           <div
-            key={faq.question}
+            key={faq.id ?? faq.question}
             className={cn(
               'overflow-hidden rounded-2xl border bg-white transition-colors',
               isOpen ? 'border-blue-200 shadow-lg shadow-blue-950/5' : 'border-slate-200'

@@ -16,10 +16,7 @@ import useLoginForm from '@/hooks/useLoginForm';
  * Komponen tampilan login.
  * Seluruh logika form berada di useLoginForm agar UI dan fungsi terpisah.
  */
-export default function LoginForm({
-  nextPath = '/dashboard',
-  showDemoCredentials = false,
-}) {
+export default function LoginForm({ nextPath = '/dashboard' }) {
   const {
     register,
     errors,
@@ -90,7 +87,7 @@ export default function LoginForm({
                 id="username"
                 type="text"
                 autoComplete="username"
-                placeholder="superadmin"
+                placeholder="Masukkan username"
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.username)}
                 aria-describedby={errors.username ? 'username-error' : undefined}
@@ -162,16 +159,6 @@ export default function LoginForm({
           </button>
         </form>
 
-        {showDemoCredentials ? (
-          <div className="mt-6 rounded-2xl bg-blue-50 px-4 py-3 text-center text-xs leading-relaxed text-slate-500">
-            <p className="font-bold text-slate-700">Akun demo fase pengembangan</p>
-            <p className="mt-1">
-              `superadmin` · `coach01` · `student01`
-              <br />
-              Password: `password123`
-            </p>
-          </div>
-        ) : null}
 
         <p className="mt-6 text-center text-xs text-slate-400">
           Lupa password? Hubungi admin AAA Sport Academy.

@@ -1,16 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Check, ChevronDown, MessageCircle, Send } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AlertTriangle, Check, ChevronDown, MessageCircle, Send } from 'lucide-react';
 import Button from '../ui/Button';
-
-const initialForm = {
-  studentName: '',
-  parentName: '',
-  parentPhone: '',
-  program: 'AAA',
-  poolPreference: 'Kolam Tirta Segara',
-};
 
 function getInputClassName(hasError) {
   return [
@@ -21,19 +13,73 @@ function getInputClassName(hasError) {
   ].join(' ');
 }
 
-export default function RegistrationCta() {
+function buildWhatsappUrl(phone) {
+  const digits = String(phone ?? '').replace(/\D/g, '');
+  if (!digits) return '';
+
+  const normalized = digits.startsWith('0')
+    ? `62${digits.slice(1)}`
+    : digits.startsWith('8')
+      ? `62${digits}`
+      : digits;
+  const message = encodeURIComponent(
+    'Halo AAA Sport Academy, saya baru mengisi form pendaftaran di website.'
+  );
+
+  return `https://wa.me/${normalized}?text=${message}`;
+}
+
+export default function RegistrationCta({
+  programs = [],
+  venues = [],
+  contactPhone = '',
+}) {
+  const programOptions = useMemo(
+    () =>
+      programs.map((program) => ({
+        value: program.code ?? program.program ?? '',
+        label: program.name ?? program.code ?? program.program ?? 'Program',
+      })).filter((program) => program.value),
+    [programs]
+  );
+  const venueOptions = useMemo(
+    () =>
+      venues
+        .map((venue) => (typeof venue === 'string' ? venue : venue?.name))
+        .filter(Boolean),
+    [venues]
+  );
+  const initialForm = useMemo(
+    () => ({
+      studentName: '',
+      parentName: '',
+      parentPhone: '',
+      program: programOptions[0]?.value ?? '',
+      poolPreference: '',
+      website: '',
+    }),
+    [programOptions]
+  );
+
   const [formData, setFormData] = useState(initialForm);
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const selectedProgramLabel =
+    programOptions.find((program) => program.value === formData.program)?.label ??
+    'yang diminati';
+  const whatsappUrl = buildWhatsappUrl(contactPhone);
 
   function handleChange(event) {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
+    setSubmitError('');
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     const nextErrors = {};
@@ -53,13 +99,47 @@ export default function RegistrationCta() {
     if (Object.keys(nextErrors).length) return;
 
     setIsSubmitting(true);
+    setSubmitError('');
 
-    // TODO: Ganti simulasi ini dengan POST /api/leads atau Server Action.
-    // Payload ini sudah mengikuti bentuk model Lead pada schema Prisma.
-    window.setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentName: formData.studentName.trim(),
+          parentName: formData.parentName.trim(),
+          parentPhone: cleanedPhone,
+          program: formData.program || null,
+          poolPreference: formData.poolPreference || null,
+          website: formData.website,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const serverFieldErrors = Object.fromEntries(
+          Object.entries(payload.fieldErrors ?? {}).map(([field, messages]) => [
+            field,
+            Array.isArray(messages) ? messages[0] : messages,
+          ])
+        );
+
+        if (Object.keys(serverFieldErrors).length) {
+          setErrors(serverFieldErrors);
+        }
+        throw new Error(
+          payload.message || 'Pendaftaran belum dapat dikirim. Silakan coba lagi.'
+        );
+      }
+
       setIsSubmitted(true);
-    }, 650);
+    } catch (error) {
+      setSubmitError(
+        error?.message || 'Pendaftaran belum dapat dikirim. Silakan coba lagi.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (isSubmitted) {
@@ -70,23 +150,28 @@ export default function RegistrationCta() {
         </span>
         <h3 className="mt-4 text-2xl font-extrabold text-slate-900">Pendaftaran Diterima!</h3>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
-          Terima kasih, {formData.parentName}. Tim AAA Sport Academy akan menghubungi WhatsApp
-          {' '}{formData.parentPhone} untuk membantu memilih jadwal trial program {formData.program}.
+          Terima kasih, {formData.parentName}. Data sudah tersimpan sebagai lead
+          dan tim AAA Sport Academy akan menghubungi WhatsApp {formData.parentPhone}
+          {' '}untuk membantu memilih jadwal trial program {selectedProgramLabel}.
         </p>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
-          <Button
-            href="https://wa.me/6281234567890?text=Halo%20AAA%20Sport%20Academy%2C%20saya%20baru%20mengisi%20form%20pendaftaran%20di%20website."
-            target="_blank"
-            rel="noreferrer"
-            leftIcon={<MessageCircle className="h-4 w-4" />}
-          >
-            Lanjut via WhatsApp
-          </Button>
+          {whatsappUrl ? (
+            <Button
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              leftIcon={<MessageCircle className="h-4 w-4" />}
+            >
+              Lanjut via WhatsApp
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="secondary"
             onClick={() => {
               setFormData(initialForm);
+              setErrors({});
+              setSubmitError('');
               setIsSubmitted(false);
             }}
           >
@@ -103,10 +188,31 @@ export default function RegistrationCta() {
       className="rounded-[28px] bg-white p-6 shadow-2xl shadow-blue-950/20 sm:p-8"
       noValidate
     >
-      <h3 className="text-2xl font-extrabold text-slate-900">Daftar Trial & Konsultasi</h3>
+      <h3 className="text-2xl font-extrabold text-slate-900">Daftar Trial &amp; Konsultasi</h3>
       <p className="mt-2 text-sm leading-relaxed text-slate-500">
-        Isi data singkat berikut. Admin akan membantu memilih level dan jadwal yang paling cocok.
+        Isi data singkat berikut. Data langsung masuk ke Marketing Leads agar
+        admin dapat membantu memilih level dan jadwal yang paling cocok.
       </p>
+
+      {submitError ? (
+        <div className="mt-5 flex gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>{submitError}</p>
+        </div>
+      ) : null}
+
+      <div className="hidden" aria-hidden="true">
+        <label>
+          Website
+          <input
+            name="website"
+            value={formData.website}
+            onChange={handleChange}
+            autoComplete="off"
+            tabIndex="-1"
+          />
+        </label>
+      </div>
 
       <div className="mt-6 space-y-4">
         <div>
@@ -118,7 +224,7 @@ export default function RegistrationCta() {
             name="studentName"
             value={formData.studentName}
             onChange={handleChange}
-            placeholder="Contoh: Keyla Anindya"
+            placeholder="Nama lengkap calon siswa"
             className={getInputClassName(errors.studentName)}
           />
           {errors.studentName ? (
@@ -136,7 +242,7 @@ export default function RegistrationCta() {
               name="parentName"
               value={formData.parentName}
               onChange={handleChange}
-              placeholder="Contoh: Ibu Ratna"
+              placeholder="Nama orang tua/wali"
               className={getInputClassName(errors.parentName)}
             />
             {errors.parentName ? (
@@ -154,7 +260,7 @@ export default function RegistrationCta() {
               type="tel"
               value={formData.parentPhone}
               onChange={handleChange}
-              placeholder="081234567890"
+              placeholder="08xxxxxxxxxx"
               className={getInputClassName(errors.parentPhone)}
             />
             {errors.parentPhone ? (
@@ -176,10 +282,12 @@ export default function RegistrationCta() {
                 onChange={handleChange}
                 className={`${getInputClassName(false)} appearance-none pr-10`}
               >
-                <option value="AAA">AAA - Pemula</option>
-                <option value="A3">A3 - Menengah</option>
-                <option value="SWDC">SWDC - Atlet</option>
-                <option value="PRIVATE">Private - 1-on-1</option>
+                <option value="">Belum menentukan</option>
+                {programOptions.map((program) => (
+                  <option key={program.value} value={program.value}>
+                    {program.label}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 pt-1 text-slate-400" />
             </div>
@@ -197,9 +305,12 @@ export default function RegistrationCta() {
                 onChange={handleChange}
                 className={`${getInputClassName(false)} appearance-none pr-10`}
               >
-                <option>Kolam Tirta Segara</option>
-                <option>Kolam Aqua Center</option>
-                <option>Belum Memilih</option>
+                <option value="">Belum Memilih</option>
+                {venueOptions.map((venue) => (
+                  <option key={venue} value={venue}>
+                    {venue}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 pt-1 text-slate-400" />
             </div>

@@ -12,18 +12,18 @@ import {
 import { studentSchema } from '@/lib/validations/dataMaster';
 
 export async function GET() {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN', 'COACH']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN', 'COACH']);
   if (response) return response;
 
   try {
-    return NextResponse.json({ data: await getStudents() });
+    return NextResponse.json({ data: await getStudents(user) });
   } catch (error) {
     return handleDataMasterError(error, 'Siswa');
   }
 }
 
 export async function POST(request) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
   if (response) return response;
 
   const { body, response: bodyResponse } = await parseJsonBody(request);
@@ -33,7 +33,7 @@ export async function POST(request) {
   if (!parsed.success) return validationResponse(parsed.error);
 
   try {
-    const student = await createStudent(parsed.data);
+    const student = await createStudent(parsed.data, user);
     return NextResponse.json({ data: student }, { status: 201 });
   } catch (error) {
     return handleDataMasterError(error, 'Siswa');

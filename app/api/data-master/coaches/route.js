@@ -9,7 +9,7 @@ import {
 import { coachCreateSchema } from '@/lib/validations/dataMaster';
 
 export async function GET() {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
   if (response) return response;
 
   try {
@@ -20,7 +20,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
   if (response) return response;
 
   const { body, response: bodyResponse } = await parseJsonBody(request);

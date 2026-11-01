@@ -38,6 +38,7 @@ export default function useScheduleCalendar({
   canManage = false,
   canBook = false,
   currentStudentId = null,
+  programScope = null,
 } = {}) {
   const [todayKey, setTodayKey] = useState('');
   const [weekStartKey, setWeekStartKey] = useState('');
@@ -304,7 +305,9 @@ export default function useScheduleCalendar({
     const canCancelBooking =
       canManage ||
       (Boolean(currentStudentId) &&
-        cancelBookingTarget?.bookedStudent?.id === currentStudentId);
+        cancelBookingTarget?.bookedStudent?.id === currentStudentId) ||
+      (Boolean(programScope) &&
+        cancelBookingTarget?.bookedStudent?.level === programScope);
 
     if (!canCancelBooking || !bookingId || isCancellingBooking) return;
 
@@ -326,6 +329,7 @@ export default function useScheduleCalendar({
     canManage,
     canBook,
     currentStudentId,
+    programScope,
     todayKey,
     weekStartKey,
     weekDateKeys,

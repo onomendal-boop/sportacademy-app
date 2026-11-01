@@ -12,11 +12,11 @@ import {
 import { transactionCreateSchema } from '@/lib/validations/finance';
 
 export async function GET() {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
   if (response) return response;
 
   try {
-    return NextResponse.json({ data: await getTransactions() });
+    return NextResponse.json({ data: await getTransactions(user) });
   } catch (error) {
     return handleFinanceError(error, 'Transaksi');
   }
@@ -33,7 +33,7 @@ export async function POST(request) {
   if (!parsed.success) return validationResponse(parsed.error);
 
   try {
-    const result = await createTransaction(parsed.data, user.id);
+    const result = await createTransaction(parsed.data, user);
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (error) {
     return handleFinanceError(error, 'Transaksi');

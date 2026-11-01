@@ -41,8 +41,8 @@ function statusTone(status) {
   return 'slate';
 }
 
-export default function StaffManager({ initialStaff = [], canManage = false, canDelete = false }) {
-  const manager = useStaffManager(initialStaff, canManage, canDelete);
+export default function StaffManager({ initialStaff = [], canManage = false, canDelete = false, initialSearch = '' }) {
+  const manager = useStaffManager(initialStaff, canManage, canDelete, initialSearch);
   const {
     filteredStaff,
     stats,

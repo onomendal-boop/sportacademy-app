@@ -58,29 +58,9 @@ export default function useLoginForm({ nextPath = '/dashboard' } = {}) {
         });
       }
 
-      if (result.code === 'USER_NOT_FOUND') {
-        setError(
-          'username',
-          {
-            type: 'server',
-            message: 'Username tidak ditemukan',
-          },
-          { shouldFocus: true }
-        );
-      } else if (
-        result.code === 'INVALID_PASSWORD' ||
-        result.code === 'WRONG_PASSWORD' ||
-        result.status === 401
-      ) {
-        setError(
-          'password',
-          {
-            type: 'server',
-            message: 'Password salah',
-          },
-          { shouldFocus: true }
-        );
-      }
+      // Kegagalan kredensial dan rate limit hanya ditampilkan sebagai
+      // error form umum. Client tidak boleh menebak apakah username ada
+      // atau password yang salah dari code/status respons.
 
       setServerError(message);
       toast.error(message);

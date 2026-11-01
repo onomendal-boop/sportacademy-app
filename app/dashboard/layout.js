@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import DashboardShell from '@/components/dashboard/DashboardShell';
 import DashboardShellSkeleton from '@/components/dashboard/DashboardShellSkeleton';
 import { requireCurrentUser } from '@/lib/auth/authService';
+import { getNewLeadCount } from '@/lib/dashboard/notificationService';
 
 // Seluruh segment /dashboard adalah area privat. Layout harus menunggu
 // request nyata untuk membaca cookie, memverifikasi masa berlaku token,
@@ -20,8 +21,19 @@ export const instant = false;
  */
 async function AuthenticatedDashboard({ children }) {
   const user = await requireCurrentUser('/dashboard');
+  let initialLeadBadgeCount = 0;
 
-  return <DashboardShell user={user}>{children}</DashboardShell>;
+  try {
+    initialLeadBadgeCount = await getNewLeadCount(user);
+  } catch (error) {
+    console.error('[dashboard-layout:lead-badge]', error);
+  }
+
+  return (
+    <DashboardShell user={user} initialLeadBadgeCount={initialLeadBadgeCount}>
+      {children}
+    </DashboardShell>
+  );
 }
 
 /**

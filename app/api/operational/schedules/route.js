@@ -12,18 +12,18 @@ import {
 import { scheduleSchema } from '@/lib/validations/operational';
 
 export async function GET() {
-  const { response } = await requireApiUser();
+  const { user, response } = await requireApiUser();
   if (response) return response;
 
   try {
-    return NextResponse.json({ data: await getSchedules() });
+    return NextResponse.json({ data: await getSchedules(user) });
   } catch (error) {
     return handleOperationalError(error, 'Jadwal');
   }
 }
 
 export async function POST(request) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
   if (response) return response;
 
   const { body, response: bodyResponse } = await parseJsonBody(request);
@@ -33,7 +33,7 @@ export async function POST(request) {
   if (!parsed.success) return validationResponse(parsed.error);
 
   try {
-    const schedule = await createSchedule(parsed.data);
+    const schedule = await createSchedule(parsed.data, user);
     return NextResponse.json({ data: schedule }, { status: 201 });
   } catch (error) {
     return handleOperationalError(error, 'Jadwal');

@@ -12,29 +12,45 @@ export const metadata = {
   description: 'Kelola seluruh jadwal mingguan AAA Sport Academy.',
 };
 
-async function OverallScheduleContent() {
-  const [currentUser, schedules, venues, coaches] = await Promise.all([
-    requireFeatureAccess('operationalOverview', '/dashboard/operasional/jadwal'),
-    getSchedules(),
+function getInitialSearch(resolvedSearchParams) {
+  const rawQuery = Array.isArray(resolvedSearchParams?.q)
+    ? resolvedSearchParams.q[0]
+    : resolvedSearchParams?.q;
+
+  return typeof rawQuery === 'string' ? rawQuery.trim().slice(0, 80) : '';
+}
+
+async function OverallScheduleContent({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const initialSearch = getInitialSearch(resolvedSearchParams);
+  const currentUser = await requireFeatureAccess(
+    'operationalOverview',
+    '/dashboard/operasional/jadwal'
+  );
+  const [schedules, venues, coaches] = await Promise.all([
+    getSchedules(currentUser),
     getTrainingVenues(),
     getCoaches(),
   ]);
 
   return (
     <OverallScheduleManager
+      key={initialSearch}
       initialSchedules={schedules}
+      initialSearch={initialSearch}
       venues={venues}
       coaches={coaches}
       canManage={isAdminLevel(currentUser?.role)}
       canDelete={canPermanentlyDelete(currentUser?.role)}
+      programScope={currentUser?.programScope ?? null}
     />
   );
 }
 
-export default function OverallSchedulePage() {
+export default function OverallSchedulePage({ searchParams }) {
   return (
     <Suspense fallback={<OperationalSkeleton />}>
-      <OverallScheduleContent />
+      <OverallScheduleContent searchParams={searchParams} />
     </Suspense>
   );
 }

@@ -10,25 +10,39 @@ export const metadata = {
   description: 'Kelola data siswa AAA Sport Academy.',
 };
 
-async function StudentContent() {
-  const [currentUser, students] = await Promise.all([
-    requireFeatureAccess('dataMasterStudents', '/dashboard/students'),
-    getStudents(),
-  ]);
+function getInitialSearch(resolvedSearchParams) {
+  const rawQuery = Array.isArray(resolvedSearchParams?.q)
+    ? resolvedSearchParams.q[0]
+    : resolvedSearchParams?.q;
+
+  return typeof rawQuery === 'string' ? rawQuery.trim().slice(0, 80) : '';
+}
+
+async function StudentContent({ searchParams }) {
+  const resolvedSearchParams = await searchParams;
+  const initialSearch = getInitialSearch(resolvedSearchParams);
+  const currentUser = await requireFeatureAccess(
+    'dataMasterStudents',
+    '/dashboard/students'
+  );
+  const students = await getStudents(currentUser);
 
   return (
     <StudentManager
+      key={initialSearch}
       initialStudents={students}
+      initialSearch={initialSearch}
       canManage={isAdminLevel(currentUser?.role)}
       canDelete={canPermanentlyDelete(currentUser?.role)}
+      programScope={currentUser?.programScope ?? null}
     />
   );
 }
 
-export default function StudentsPage() {
+export default function StudentsPage({ searchParams }) {
   return (
     <Suspense fallback={<DataMasterSkeleton />}>
-      <StudentContent />
+      <StudentContent searchParams={searchParams} />
     </Suspense>
   );
 }

@@ -68,8 +68,14 @@ export default function TrainingVenueManager({
   initialVenues = [],
   canManage = false,
   canDelete = false,
+  initialSearch = '',
 }) {
-  const manager = useTrainingVenueManager(initialVenues, canManage, canDelete);
+  const manager = useTrainingVenueManager(
+    initialVenues,
+    canManage,
+    canDelete,
+    initialSearch
+  );
   const {
     filteredVenues,
     locations,

@@ -12,7 +12,7 @@ import {
 import { subscriptionSchema } from '@/lib/validations/finance';
 
 export async function PATCH(request, { params }) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
   if (response) return response;
 
   const { id } = await params;
@@ -23,7 +23,7 @@ export async function PATCH(request, { params }) {
   if (!parsed.success) return validationResponse(parsed.error);
 
   try {
-    const subscription = await updateSubscription(id, parsed.data);
+    const subscription = await updateSubscription(id, parsed.data, user);
     return NextResponse.json({ data: subscription });
   } catch (error) {
     return handleFinanceError(error, 'Langganan');
@@ -31,13 +31,13 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(_request, { params }) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
   if (response) return response;
 
   const { id } = await params;
 
   try {
-    return NextResponse.json(await deleteSubscription(id));
+    return NextResponse.json(await deleteSubscription(id, user));
   } catch (error) {
     return handleFinanceError(error, 'Langganan');
   }

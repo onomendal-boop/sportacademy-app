@@ -3,62 +3,32 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Quote, Star } from 'lucide-react';
 
-const testimonials = [
-  {
-    id: 1,
-    quote:
-      'Awalnya anak kami takut memasukkan wajah ke air. Setelah dua bulan di AAA, ia berani mengapung dan selalu semangat menunggu jadwal Sabtu pagi.',
-    name: 'Ratna',
-    role: 'Orang tua siswa AAA Pemula',
-    initials: 'RA',
-    rating: 5,
-  },
-  {
-    id: 2,
-    quote:
-      'Pelatihnya sabar dan progresnya jelas. Kami menerima catatan perkembangan sehingga tahu kapan anak siap pindah dari AAA ke A3.',
-    name: 'Fajar',
-    role: 'Orang tua siswa A3 Menengah',
-    initials: 'DP',
-    rating: 5,
-  },
-  {
-    id: 3,
-    quote:
-      'Program SWDC membantu saya memperbaiki start dan race pace. Simulasi lombanya membuat saya jauh lebih percaya diri saat kompetisi sekolah.',
-    name: 'Rafi Hidayat',
-    role: 'Atlet SWDC, 12 tahun',
-    initials: 'RH',
-    rating: 5,
-  },
-  {
-    id: 4,
-    quote:
-      'Kelas private sangat fleksibel untuk jadwal sekolah anak kami. Fokus satu lawan satu membuat teknik pernapasannya berkembang lebih cepat.',
-    name: 'Monica',
-    role: 'Orang tua siswa Private',
-    initials: 'MW',
-    rating: 5,
-  },
-];
-
 function cn(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function TestimonialSlider() {
+function getInitials(name) {
+  return String(name ?? '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'AA';
+}
+
+export default function TestimonialSlider({ testimonials = [] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    if (isPaused) return undefined;
+    if (isPaused || testimonials.length === 0) return undefined;
 
     const interval = window.setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % testimonials.length);
     }, 5500);
 
     return () => window.clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, testimonials.length]);
 
   function goToPrevious() {
     setActiveIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
@@ -67,6 +37,8 @@ export default function TestimonialSlider() {
   function goToNext() {
     setActiveIndex((prev) => (prev + 1) % testimonials.length);
   }
+
+  if (testimonials.length === 0) return null;
 
   return (
     <div
@@ -105,7 +77,7 @@ export default function TestimonialSlider() {
               </blockquote>
 
               <div className="mt-7 flex items-center justify-center gap-3">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0066CC] text-sm font-extrabold text-white">
+                <span className={cn('flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-sm font-extrabold text-white', testimonial.avatarTone)}>
                   {testimonial.initials}
                 </span>
                 <span className="text-left">

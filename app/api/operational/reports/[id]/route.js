@@ -36,13 +36,13 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(_request, { params }) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
   if (response) return response;
 
   const { id } = await params;
 
   try {
-    return NextResponse.json(await deleteReport(id));
+    return NextResponse.json(await deleteReport(id, user));
   } catch (error) {
     return handleOperationalError(error, 'Raport');
   }

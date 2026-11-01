@@ -23,9 +23,9 @@ function normalize(value) {
   return String(value ?? '').toLowerCase();
 }
 
-export default function useStaffManager(initialStaff = [], canManage = false, canDelete = false) {
+export default function useStaffManager(initialStaff = [], canManage = false, canDelete = false, initialSearch = '') {
   const [staff, setStaff] = useState(initialStaff);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [positionFilter, setPositionFilter] = useState('ALL');
 

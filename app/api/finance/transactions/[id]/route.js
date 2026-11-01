@@ -23,7 +23,7 @@ export async function PATCH(request, { params }) {
   if (!parsed.success) return validationResponse(parsed.error);
 
   try {
-    const result = await updateTransaction(id, parsed.data, user.id);
+    const result = await updateTransaction(id, parsed.data, user);
     return NextResponse.json({ data: result });
   } catch (error) {
     return handleFinanceError(error, 'Transaksi');
@@ -31,13 +31,13 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(_request, { params }) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
+  const { user, response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
   if (response) return response;
 
   const { id } = await params;
 
   try {
-    return NextResponse.json(await deleteTransaction(id));
+    return NextResponse.json(await deleteTransaction(id, user));
   } catch (error) {
     return handleFinanceError(error, 'Transaksi');
   }

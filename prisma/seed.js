@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 const DEFAULT_PASSWORD = 'password123';
-const COACH_SPECIALIZATIONS = ['Pemula', 'Menengah', 'Atlet'];
+const COACH_SPECIALIZATIONS = ['AAA Sport Academy', 'A3', 'SWDC Swimmer'];
 const STUDENT_LEVELS = ['AAA', 'A3', 'SWDC'];
 
 const COACH_NAMES = [
@@ -101,21 +101,21 @@ const STAFF_SEED = [
 ];
 
 const SCHEDULE_SEED = [
-  // AAA - Pemula
+  // AAA Sport Academy
   { title: 'Bintang Laut A', program: 'AAA', dayOfWeek: 'MONDAY', startTime: '16:00', endTime: '17:00', capacity: 10, venueName: 'Kolam Utama AAA', lane: 'Area Anak • Jalur 1-2', coachUsername: 'coach01' },
   { title: 'Lumba-Lumba A', program: 'AAA', dayOfWeek: 'WEDNESDAY', startTime: '16:00', endTime: '17:00', capacity: 10, venueName: 'Kolam Utama AAA', lane: 'Area Anak • Jalur 1-2', coachUsername: 'coach03' },
   { title: 'Bintang Laut B', program: 'AAA', dayOfWeek: 'FRIDAY', startTime: '15:30', endTime: '16:30', capacity: 10, venueName: 'Kolam Utama AAA', lane: 'Area Dangkal', coachUsername: null },
   { title: 'Weekend Ceria', program: 'AAA', dayOfWeek: 'SATURDAY', startTime: '08:00', endTime: '09:00', capacity: 10, venueName: 'Kolam Utama AAA', lane: 'Area Anak • Jalur 1-2', coachUsername: 'coach01' },
   { title: 'Lumba-Lumba B', program: 'AAA', dayOfWeek: 'SUNDAY', startTime: '09:00', endTime: '10:00', capacity: 10, venueName: 'Kolam Utama AAA', lane: 'Area Dangkal', coachUsername: 'coach04' },
 
-  // A3 - Menengah
+  // A3
   { title: 'Hiu Muda A', program: 'A3', dayOfWeek: 'TUESDAY', startTime: '16:00', endTime: '17:30', capacity: 12, venueName: 'Kolam Kompetisi A3', lane: 'Jalur 3-4', coachUsername: 'coach02' },
   { title: 'Teknik Gaya Bebas', program: 'A3', dayOfWeek: 'WEDNESDAY', startTime: '17:00', endTime: '18:30', capacity: 12, venueName: 'Kolam Kompetisi A3', lane: 'Jalur 2-3', coachUsername: 'coach04' },
   { title: 'Hiu Muda B', program: 'A3', dayOfWeek: 'THURSDAY', startTime: '16:00', endTime: '17:30', capacity: 12, venueName: 'Kolam Kompetisi A3', lane: 'Jalur 3-4', coachUsername: 'coach02' },
   { title: 'Endurance Weekend', program: 'A3', dayOfWeek: 'SATURDAY', startTime: '10:00', endTime: '11:30', capacity: 12, venueName: 'Kolam Kompetisi A3', lane: 'Jalur 1-3', coachUsername: null },
   { title: 'Start & Turn Clinic', program: 'A3', dayOfWeek: 'SUNDAY', startTime: '08:00', endTime: '09:30', capacity: 12, venueName: 'Kolam Kompetisi A3', lane: 'Jalur 4-5', coachUsername: 'coach10' },
 
-  // SWDC - Atlet
+  // SWDC Swimmer
   { title: 'Squad Kompetisi A', program: 'SWDC', dayOfWeek: 'MONDAY', startTime: '05:30', endTime: '07:30', capacity: 16, venueName: 'Kolam Atlet SWDC', lane: 'Jalur 1-6', coachUsername: 'coach09' },
   { title: 'Dryland & Core', program: 'SWDC', dayOfWeek: 'TUESDAY', startTime: '17:00', endTime: '18:30', capacity: 16, venueName: 'Kolam Atlet SWDC', lane: 'Area Dryland', coachUsername: 'coach02' },
   { title: 'Squad Kompetisi B', program: 'SWDC', dayOfWeek: 'WEDNESDAY', startTime: '05:30', endTime: '07:30', capacity: 16, venueName: 'Kolam Atlet SWDC', lane: 'Jalur 1-6', coachUsername: 'coach09' },
@@ -136,7 +136,7 @@ const SCHEDULE_SEED = [
 const FINANCE_PACKAGE_SEED = [
   {
     key: 'aaaMonthly',
-    name: 'AAA Pemula 1 Bulan',
+    name: 'AAA Sport Academy 1 Bulan',
     description: 'Delapan sesi pengenalan air dan teknik dasar renang untuk pemula.',
     program: 'AAA',
     price: 650000,
@@ -148,7 +148,7 @@ const FINANCE_PACKAGE_SEED = [
   },
   {
     key: 'a3Monthly',
-    name: 'A3 Menengah 1 Bulan',
+    name: 'A3 1 Bulan',
     description: 'Dua belas sesi pengembangan teknik gaya, endurance, start, dan turn.',
     program: 'A3',
     price: 850000,
@@ -160,7 +160,7 @@ const FINANCE_PACKAGE_SEED = [
   },
   {
     key: 'aaaQuarter',
-    name: 'AAA Pemula 3 Bulan',
+    name: 'AAA Sport Academy 3 Bulan',
     description: 'Paket hemat tiga bulan untuk progres dasar renang yang lebih konsisten.',
     program: 'AAA',
     price: 1750000,
@@ -172,8 +172,8 @@ const FINANCE_PACKAGE_SEED = [
   },
   {
     key: 'swdcSemester',
-    name: 'SWDC Atlet 6 Bulan',
-    description: 'Program semester atlet dengan latihan intensif dan persiapan kompetisi.',
+    name: 'SWDC Swimmer 6 Bulan',
+    description: 'Program semester SWDC Swimmer dengan latihan intensif dan persiapan kompetisi.',
     program: 'SWDC',
     price: 6500000,
     durationLabel: '6 Bulan',
@@ -219,6 +219,483 @@ const FINANCE_SUBSCRIPTION_SEED = [
   { username: 'student08', packageKey: 'aaaMonthly', startsOffset: 0, expiresOffset: 30, remainingSessions: 8, status: 'PENDING', autoRenew: false, paymentMethod: 'TRANSFER' },
   { username: 'student09', packageKey: 'privateSingle', startsOffset: -4, expiresOffset: 10, remainingSessions: 1, status: 'ACTIVE', autoRenew: false, paymentMethod: 'QRIS' },
   { username: 'student10', packageKey: 'a3Monthly', startsOffset: -14, expiresOffset: 16, remainingSessions: 8, status: 'ACTIVE', autoRenew: true, paymentMethod: 'CASH' },
+];
+
+const SYSTEM_SETTINGS_SEED = {
+  general: {
+    businessName: 'AAA Sport Academy',
+    legalName: 'AAA Sport Academy',
+    tagline: 'Belajar Aman, Percaya Diri, Berprestasi di Air',
+    email: 'halo@aaa.com',
+    phone: '081200000001',
+    website: '',
+    address: 'Jakarta Selatan, Jakarta',
+    timezone: 'Asia/Jakarta',
+    logoDataUrl: '',
+    logoFileName: '',
+    operatingHours: [
+      { day: 'Senin', isOpen: true, openTime: '05:30', closeTime: '19:00' },
+      { day: 'Selasa', isOpen: true, openTime: '05:30', closeTime: '19:00' },
+      { day: 'Rabu', isOpen: true, openTime: '05:30', closeTime: '19:00' },
+      { day: 'Kamis', isOpen: true, openTime: '05:30', closeTime: '19:00' },
+      { day: 'Jumat', isOpen: true, openTime: '05:30', closeTime: '19:00' },
+      { day: 'Sabtu', isOpen: true, openTime: '05:30', closeTime: '19:00' },
+      { day: 'Minggu', isOpen: true, openTime: '05:30', closeTime: '19:00' },
+    ],
+  },
+  financial: {
+    taxEnabled: false,
+    taxName: 'PPN',
+    taxPercentage: 0,
+    pricesIncludeTax: true,
+    lateFeeEnabled: true,
+    lateFeeType: 'percentage',
+    lateFeePercentage: 2,
+    lateFeePeriod: 'month',
+    lateFeeFixedAmount: 0,
+    lateFeeGraceDays: 3,
+    lateFeeCapPercentage: 10,
+    refundEnabled: true,
+    refundOver7DaysPercentage: 90,
+    refund3To7DaysPercentage: 70,
+    refundUnder3DaysPercentage: 50,
+    refundAdminFeePercentage: 5,
+    refundProcessingDays: 7,
+    refundPolicyNotes:
+      'Pengajuan refund diverifikasi admin berdasarkan tanggal pengajuan, jumlah sesi yang belum digunakan, dan bukti pembayaran.',
+  },
+  notification: {
+    senderName: 'AAA Sport Academy',
+    whatsappNumber: '081200000001',
+    emailFrom: 'halo@aaa.com',
+  },
+  siteContent: {
+    academyFeatures: [
+      {
+        iconKey: 'shield-check',
+        title: 'Keamanan Terstruktur',
+        description: 'Progres bertahap sesuai kesiapan anak dan pengawasan pelatih di setiap sesi.',
+      },
+      {
+        iconKey: 'users',
+        title: 'Kelompok Kecil',
+        description: 'Kapasitas kelas dibatasi agar setiap siswa mendapat perhatian yang cukup.',
+      },
+      {
+        iconKey: 'badge-check',
+        title: 'Kurikulum Bertahap',
+        description: 'Target belajar jelas dari pemula hingga jalur prestasi dan kompetisi.',
+      },
+      {
+        iconKey: 'calendar-days',
+        title: 'Pilihan Jadwal Fleksibel',
+        description: 'Tersedia kelas weekday, weekend, dan slot private di kolam partner.',
+      },
+    ],
+  },
+};
+
+const NOTIFICATION_TEMPLATE_SEED = [
+  {
+    id: 'payment-reminder-whatsapp',
+    name: 'Pengingat Pembayaran WhatsApp',
+    channel: 'WHATSAPP',
+    eventKey: 'PAYMENT_REMINDER',
+    subject: null,
+    message:
+      'Halo {nama_orang_tua}, kami dari {nama_bisnis}. Mengingatkan bahwa paket {nama_paket} untuk {nama_siswa} berlaku sampai {tanggal_jatuh_tempo}. Sisa pertemuan saat ini {sisa_pertemuan}. Silakan hubungi admin apabila ingin memperpanjang paket. Terima kasih.',
+    isActive: true,
+  },
+  {
+    id: 'payment-success-whatsapp',
+    name: 'Pembayaran Berhasil WhatsApp',
+    channel: 'WHATSAPP',
+    eventKey: 'PAYMENT_SUCCESS',
+    subject: null,
+    message:
+      'Halo {nama_orang_tua}, pembayaran {nomor_invoice} sebesar {nominal_tagihan} untuk {nama_siswa} telah kami terima. Paket {nama_paket} berlaku sampai {tanggal_jatuh_tempo}. Terima kasih telah mempercayakan perjalanan renang bersama {nama_bisnis}.',
+    isActive: true,
+  },
+  {
+    id: 'class-reminder-whatsapp',
+    name: 'Pengingat Jadwal Kelas WhatsApp',
+    channel: 'WHATSAPP',
+    eventKey: 'CLASS_REMINDER',
+    subject: null,
+    message:
+      'Halo {nama_orang_tua}, mengingatkan jadwal latihan {nama_siswa} pada {jadwal_kelas} di {nama_kolam} bersama {nama_pelatih}. Mohon hadir 15 menit lebih awal untuk pemanasan dan persiapan.',
+    isActive: true,
+  },
+  {
+    id: 'lead-follow-up-whatsapp',
+    name: 'Follow-up Lead WhatsApp',
+    channel: 'WHATSAPP',
+    eventKey: 'LEAD_FOLLOW_UP',
+    subject: null,
+    message:
+      'Halo {nama_orang_tua}, terima kasih telah menghubungi {nama_bisnis}. Kami siap membantu memilih program dan jadwal trial yang cocok untuk {nama_siswa}. Apakah berkenan kami bantu tentukan jadwal konsultasinya?',
+    isActive: true,
+  },
+  {
+    id: 'welcome-email',
+    name: 'Selamat Datang Email',
+    channel: 'EMAIL',
+    eventKey: 'WELCOME',
+    subject: 'Selamat datang di {nama_bisnis}',
+    message:
+      'Halo {nama_orang_tua},\n\nSelamat datang di {nama_bisnis}. Paket {nama_paket} untuk {nama_siswa} telah tercatat pada sistem kami. Tim admin akan membantu apabila Anda membutuhkan informasi jadwal, perpanjangan paket, atau progres latihan.\n\nSalam,\n{nama_bisnis}',
+    isActive: true,
+  },
+];
+
+const PROGRAM_CONTENT_SEED = [
+  {
+    program: 'AAA',
+    tagline: 'Berani dan aman di air',
+    description:
+      'Pengenalan air, keberanian, mengapung, meluncur, dan teknik dasar renang untuk anak yang baru memulai.',
+    audienceLabel: 'Usia 4+ • Pemula',
+    scheduleLabel: '2x per minggu',
+    features: [
+      'Asesmen level awal',
+      'Kelompok kecil maks. 10 siswa',
+      'Fokus keamanan & kepercayaan diri',
+    ],
+    sortOrder: 0,
+    isActive: true,
+  },
+  {
+    program: 'A3',
+    tagline: 'Teknik makin rapi',
+    description:
+      'Pengembangan gaya bebas, gaya dada, endurance, start, dan pembalikan untuk siswa yang sudah menguasai dasar.',
+    audienceLabel: 'Sudah bisa dasar renang',
+    scheduleLabel: '2x per minggu',
+    features: [
+      'Klinik teknik gaya',
+      'Latihan endurance bertahap',
+      'Evaluasi kesiapan naik level',
+    ],
+    sortOrder: 1,
+    isActive: true,
+  },
+  {
+    program: 'SWDC',
+    tagline: 'Siap menuju podium',
+    description:
+      'Program prestasi dengan periodisasi latihan, race pace, dryland, pencatatan waktu, dan simulasi kompetisi.',
+    audienceLabel: 'Atlet & jalur kompetisi',
+    scheduleLabel: '3-5x per minggu',
+    features: [
+      'Program latihan terperiodisasi',
+      'Dryland dan simulasi lomba',
+      'Monitoring catatan waktu',
+    ],
+    sortOrder: 2,
+    isActive: true,
+  },
+  {
+    program: 'PRIVATE',
+    tagline: 'Fokus sesuai kebutuhan',
+    description:
+      'Sesi personal bersama satu pelatih untuk target khusus, jadwal fleksibel, atau anak yang membutuhkan pendampingan ekstra.',
+    audienceLabel: 'Semua level • Fleksibel',
+    scheduleLabel: 'Jadwal berdasarkan booking',
+    features: [
+      'Satu siswa satu pelatih',
+      'Materi dipersonalisasi',
+      'Pilihan slot lebih fleksibel',
+    ],
+    sortOrder: 3,
+    isActive: true,
+  },
+];
+
+const TESTIMONIAL_SEED = [
+  {
+    name: 'Rina Amelia',
+    roleLabel: 'Orang tua siswa AAA Sport Academy • 8 bulan',
+    quote:
+      'Awalnya Zoya masih takut memasukkan kepala ke air. Sekarang sudah berani meluncur sendiri dan selalu semangat setiap jadwal latihan.',
+    rating: 5,
+    sortOrder: 0,
+    isActive: true,
+  },
+  {
+    name: 'Daniel Simanjuntak',
+    roleLabel: 'Orang tua siswa A3 • 1 tahun',
+    quote:
+      'Raportnya detail dan mudah dipahami. Kami tahu teknik apa yang sudah dikuasai Bimo Saputra dan bagian mana yang sedang menjadi fokus pelatih.',
+    rating: 5,
+    sortOrder: 1,
+    isActive: true,
+  },
+  {
+    name: 'Ratna Sari',
+    roleLabel: 'Orang tua atlet SWDC Swimmer • 2 tahun',
+    quote:
+      'Program SWDC membantu Raka lebih disiplin dan percaya diri menghadapi lomba. Catatan waktunya terus membaik dari bulan ke bulan.',
+    rating: 5,
+    sortOrder: 2,
+    isActive: true,
+  },
+];
+
+const FAQ_SEED = [
+  {
+    question: 'Usia berapa anak dapat mulai belajar renang?',
+    answer:
+      'Program AAA Sport Academy dapat diikuti mulai usia 4 tahun. Pada asesmen awal, pelatih menilai kesiapan fisik, keberanian di air, dan kemampuan mengikuti instruksi agar anak ditempatkan pada level yang aman.',
+    sortOrder: 0,
+    isActive: true,
+  },
+  {
+    question: 'Apakah tersedia kelas trial sebelum berlangganan?',
+    answer:
+      'Tersedia konsultasi dan penjadwalan trial sesuai ketersediaan kelas. Isi form pendaftaran pada landing page, kemudian admin akan menghubungi Anda melalui WhatsApp untuk memilih program serta jadwal.',
+    sortOrder: 1,
+    isActive: true,
+  },
+  {
+    question: 'Perlengkapan apa yang perlu dibawa saat latihan?',
+    answer:
+      'Siswa perlu membawa pakaian renang, topi renang, kacamata renang, handuk, botol minum, dan pakaian ganti. Kickboard serta alat bantu latihan dasar akan diarahkan oleh pelatih sesuai kebutuhan sesi.',
+    sortOrder: 2,
+    isActive: true,
+  },
+  {
+    question: 'Bagaimana orang tua memantau progres anak?',
+    answer:
+      'Progres dicatat dalam raport siswa per periode. Setelah diterbitkan pelatih, siswa dan orang tua dapat melihat kompetensi, catatan pelatih, dan rekomendasi level melalui dashboard.',
+    sortOrder: 3,
+    isActive: true,
+  },
+  {
+    question: 'Apakah jadwal Private dapat disesuaikan?',
+    answer:
+      'Jadwal Private mengikuti slot yang tersedia dan kapasitas setiap slot adalah satu siswa. Siswa dengan paket Private aktif dapat melihat serta memesan slot melalui dashboard.',
+    sortOrder: 4,
+    isActive: true,
+  },
+];
+
+const PROMOTION_SEED = [
+  {
+    title: 'Flash Sale Weekend Renang',
+    description:
+      'Potongan pendaftaran program AAA Sport Academy untuk transaksi akhir pekan. Kuota promo dibatasi agar ukuran kelas tetap kecil dan aman.',
+    type: 'FLASH_SALE',
+    code: 'FLASHAAA25',
+    discountType: 'PERCENTAGE',
+    discountValue: 25,
+    minPurchaseAmount: 500000,
+    maxDiscountAmount: 250000,
+    program: 'AAA',
+    poolName: 'Kolam Utama AAA',
+    startOffset: -1,
+    endOffset: 14,
+    usageLimit: 50,
+    perUserLimit: 1,
+    terms: 'Berlaku untuk pendaftar baru dengan minimum transaksi Rp 500.000.',
+  },
+  {
+    title: 'Promo Pendaftar Baru',
+    description:
+      'Potongan langsung untuk pendaftaran baru pada program yang tersedia selama periode campaign berlangsung.',
+    type: 'SEASONAL',
+    code: 'AAABARU100',
+    discountType: 'FIXED_AMOUNT',
+    discountValue: 100000,
+    minPurchaseAmount: 550000,
+    maxDiscountAmount: 100000,
+    program: null,
+    poolName: null,
+    startOffset: -2,
+    endOffset: 21,
+    usageLimit: 100,
+    perUserLimit: 1,
+    terms: 'Tidak dapat digabungkan dengan flash sale pada transaksi yang sama.',
+  },
+  {
+    title: 'Referral Sahabat Renang',
+    description:
+      'Ajak teman belajar renang. Teman yang mendaftar mendapat potongan awal, pemberi referral mengikuti benefit program yang berlaku.',
+    type: 'REFERRAL',
+    code: 'SAHABATAAA',
+    discountType: 'PERCENTAGE',
+    discountValue: 10,
+    minPurchaseAmount: 450000,
+    maxDiscountAmount: 150000,
+    program: null,
+    poolName: null,
+    startOffset: -7,
+    endOffset: 45,
+    usageLimit: 200,
+    perUserLimit: 1,
+    referrerBenefit: 'Voucher sesi sesuai ketentuan admin',
+    refereeBenefit: 'Diskon 10% pendaftaran pertama',
+    terms: 'Kode referral dimasukkan saat pendaftaran dan diverifikasi oleh admin.',
+  },
+];
+
+const ARTICLE_SEED = [
+  {
+    title: 'Atlet SWDC Raih Pengalaman Berharga di Simulasi Kompetisi',
+    slug: 'atlet-swdc-simulasi-kompetisi-renang',
+    excerpt:
+      'Simulasi kompetisi membantu atlet SWDC melatih start, race pace, dan manajemen emosi sebelum menghadapi lomba resmi.',
+    content:
+      '<p>Simulasi kompetisi menjadi bagian penting dari persiapan atlet SWDC Swimmer sebelum turun pada lomba resmi. Melalui format yang menyerupai perlombaan, atlet berlatih mengelola start, menjaga race pace, dan tetap fokus hingga sentuhan akhir.</p><h2>Melatih kesiapan lomba secara menyeluruh</h2><p>Pelatih menilai reaksi start, fase underwater, kualitas turn, serta konsistensi tempo pada paruh kedua lomba. Catatan dari simulasi kemudian dipakai untuk menentukan fokus latihan pada siklus berikutnya.</p><h2>Manajemen emosi sebelum start</h2><p>Selain aspek teknik, atlet dilatih membangun rutinitas pemanasan dan strategi menghadapi rasa gugup. Pengalaman berada pada suasana lomba membantu mereka tampil lebih tenang saat kompetisi sesungguhnya.</p><p>Orang tua dapat mendukung dengan memastikan atlet cukup tidur, membawa perlengkapan lengkap, dan tiba lebih awal untuk pemanasan.</p>',
+    category: 'Prestasi',
+    tags: ['SWDC', 'Kompetisi', 'Atlet'],
+    authorUsername: 'coach09',
+    publishedOffset: -2,
+    featuredImageUrl: null,
+    featuredImageAlt: 'Atlet renang SWDC melakukan start saat simulasi kompetisi',
+    seoTitle: 'Simulasi Kompetisi Atlet SWDC Swimmer | AAA Sport Academy',
+    seoDescription: 'Simulasi kompetisi membantu atlet SWDC melatih start, race pace, turn, dan kesiapan mental sebelum lomba resmi.',
+  },
+  {
+    title: '5 Cara Aman Mengenalkan Anak pada Air Sejak Usia Dini',
+    slug: 'cara-aman-mengenalkan-anak-pada-air',
+    excerpt:
+      'Pengenalan air yang positif membantu anak berani, aman, dan menikmati proses belajar renang sejak sesi pertama.',
+    content:
+      '<p>Pengalaman pertama anak di air sebaiknya terasa aman dan menyenangkan. Orang tua tidak perlu memaksa anak langsung berenang jauh; fokus awal adalah keberanian, keseimbangan, dan kebiasaan aman di sekitar kolam.</p><h2>Mulai dari aktivitas sederhana</h2><ul><li>Biarkan anak bermain dan menyiram air ke wajah secara bertahap.</li><li>Latih meniup gelembung untuk mengenal kontrol napas.</li><li>Gunakan kickboard dengan pendampingan langsung.</li><li>Berhenti sebelum anak terlalu lelah agar pengalaman tetap positif.</li></ul><h2>Selalu utamakan pengawasan</h2><p>Anak tidak boleh berada di area kolam tanpa pengawasan orang dewasa, termasuk ketika sudah dapat mengapung. Pelampung bukan pengganti pengawasan.</p><p>Di AAA Sport Academy, siswa pemula melalui asesmen dan latihan bertahap sesuai kesiapan masing-masing.</p>',
+    category: 'Tips Renang',
+    tags: ['Anak', 'Pemula', 'Keamanan Air'],
+    authorUsername: 'coach01',
+    publishedOffset: -5,
+    featuredImageUrl: null,
+    featuredImageAlt: 'Anak belajar mengenal air bersama pelatih renang',
+    seoTitle: '5 Cara Aman Mengenalkan Anak pada Air | AAA Sport Academy',
+    seoDescription: 'Panduan mengenalkan anak pada air secara aman dan menyenangkan, dari meniup gelembung hingga latihan kickboard.',
+  },
+  {
+    title: 'Manfaat Renang Rutin untuk Postur dan Kesehatan Anak',
+    slug: 'manfaat-renang-rutin-untuk-postur-anak',
+    excerpt:
+      'Renang melatih otot inti, koordinasi, dan kapasitas paru dengan beban sendi yang relatif rendah.',
+    content:
+      '<p>Renang melibatkan hampir seluruh kelompok otot utama sambil memberikan beban yang relatif rendah pada sendi. Karena tubuh ditopang air, anak dapat bergerak aktif dengan risiko benturan yang lebih kecil.</p><h2>Melatih postur dan koordinasi</h2><p>Gerakan lengan, tungkai, dan rotasi tubuh menuntut koordinasi serta kekuatan otot inti. Latihan yang konsisten membantu anak membangun kesadaran posisi tubuh dan keseimbangan.</p><h2>Mendukung kebugaran jantung dan paru</h2><p>Pengaturan napas dan aktivitas aerobik di air mendukung kebugaran kardiorespirasi. Intensitas tetap harus disesuaikan dengan usia, level, dan kondisi kesehatan anak.</p><p>Apabila anak memiliki riwayat kesehatan tertentu, sampaikan kepada admin dan pelatih sebelum memulai program.</p>',
+    category: 'Kesehatan Anak',
+    tags: ['Kesehatan', 'Postur', 'Anak Aktif'],
+    authorUsername: 'coach03',
+    publishedOffset: -12,
+    featuredImageUrl: null,
+    featuredImageAlt: 'Anak berlatih renang untuk kesehatan dan postur tubuh',
+    seoTitle: 'Manfaat Renang untuk Postur dan Kesehatan Anak',
+    seoDescription: 'Renang rutin membantu melatih postur, koordinasi, otot inti, dan kebugaran jantung-paru anak.',
+  },
+];
+
+const LEAD_SEED = [
+  {
+    studentName: 'Keyla Anindya',
+    studentAge: 6,
+    parentName: 'Dewi Lestari',
+    parentPhone: '081210000101',
+    parentEmail: 'dewi.prasetyo@example.com',
+    program: 'AAA',
+    poolPreference: 'Kolam Utama AAA',
+    source: 'LANDING_PAGE',
+    referralCode: 'FLASHAAA25',
+    message: 'Mohon dibantu jadwal trial akhir pekan.',
+    status: 'NEW',
+    priority: 'HIGH',
+    createdOffset: 0,
+    activities: [
+      {
+        type: 'SYSTEM',
+        title: 'Lead masuk dari landing page',
+        description: 'Form pendaftaran publik diterima dan menunggu follow-up admin.',
+      },
+    ],
+  },
+  {
+    studentName: 'Raka Aditya',
+    studentAge: 9,
+    parentName: 'Pratama',
+    parentPhone: '081210000102',
+    parentEmail: 'pratama@example.com',
+    program: 'A3',
+    poolPreference: 'Kolam Kompetisi A3',
+    source: 'INSTAGRAM',
+    referralCode: null,
+    message: 'Sudah dapat gaya bebas dasar, ingin asesmen A3.',
+    status: 'CONTACTED',
+    priority: 'MEDIUM',
+    createdOffset: -2,
+    nextFollowUpOffset: 1,
+    activities: [
+      {
+        type: 'SYSTEM',
+        title: 'Lead masuk dari Instagram',
+        description: 'Calon siswa menanyakan asesmen level A3.',
+      },
+      {
+        type: 'NOTE',
+        title: 'WhatsApp follow-up dikirim',
+        description: 'Admin mengirim pilihan jadwal asesmen.',
+      },
+    ],
+  },
+  {
+    studentName: 'Kirana Sarasvati',
+    studentAge: 7,
+    parentName: 'Ibu Ratna',
+    parentPhone: '081210000103',
+    parentEmail: null,
+    program: 'PRIVATE',
+    poolPreference: 'Kolam Utama AAA',
+    source: 'WHATSAPP',
+    referralCode: 'SAHABATAAA',
+    message: 'Membutuhkan pendampingan private karena masih takut air.',
+    status: 'TRIAL_SCHEDULED',
+    priority: 'HIGH',
+    createdOffset: -4,
+    trialOffset: 2,
+    activities: [
+      {
+        type: 'SYSTEM',
+        title: 'Lead masuk melalui WhatsApp',
+        description: 'Orang tua meminta sesi private untuk pengenalan air.',
+      },
+      {
+        type: 'STATUS',
+        title: 'Trial dijadwalkan',
+        description: 'Jadwal trial sudah dikonfirmasi kepada orang tua.',
+      },
+    ],
+  },
+  {
+    studentName: 'Alvaro',
+    studentAge: 11,
+    parentName: 'Bapak Hendra Gunawan',
+    parentPhone: '081210000104',
+    parentEmail: 'hendra.gunawan@example.com',
+    program: 'SWDC',
+    poolPreference: 'Kolam Atlet SWDC',
+    source: 'REFERRAL',
+    referralCode: 'SAHABATAAA',
+    message: 'Ingin evaluasi untuk jalur kompetisi.',
+    status: 'WAITING_RESPONSE',
+    priority: 'MEDIUM',
+    createdOffset: -6,
+    nextFollowUpOffset: 0,
+    activities: [
+      {
+        type: 'SYSTEM',
+        title: 'Lead referral masuk',
+        description: 'Direferensikan oleh keluarga siswa aktif.',
+      },
+      {
+        type: 'NOTE',
+        title: 'Menunggu konfirmasi jadwal evaluasi',
+        description: 'Admin sudah mengirim persyaratan dan pilihan waktu evaluasi SWDC.',
+      },
+    ],
+  },
 ];
 
 // Katalog kompetensi raport per level: salinan dari
@@ -435,18 +912,46 @@ async function main() {
     isActive: true,
   };
 
-  // Admin operasional harian: penjadwalan, kasir/transaksi, dan lead.
-  const admin = {
-    name: 'Admin Operasional',
-    username: 'admin',
-    email: 'admin@aaa.com',
-    phone: '081200000002',
-    password: passwordHash,
-    profileImage: avatarUrl('Admin Operasional'),
-    role: 'ADMIN',
-    specialization: null,
-    isActive: true,
-  };
+  // Satu admin untuk setiap program. programScope membatasi data
+  // Operasional dan Finance yang dapat dikelola akun tersebut.
+  const programAdmins = [
+    {
+      name: 'Admin AAA Sport Academy',
+      username: 'adminaaa',
+      email: 'admin.aaa@aaa.com',
+      phone: '081200000002',
+      password: passwordHash,
+      profileImage: avatarUrl('Admin AAA Sport Academy'),
+      role: 'ADMIN',
+      programScope: 'AAA',
+      specialization: null,
+      isActive: true,
+    },
+    {
+      name: 'Admin A3',
+      username: 'admina3',
+      email: 'admin.a3@aaa.com',
+      phone: '081200000003',
+      password: passwordHash,
+      profileImage: avatarUrl('Admin A3'),
+      role: 'ADMIN',
+      programScope: 'A3',
+      specialization: null,
+      isActive: true,
+    },
+    {
+      name: 'Admin SWDC Swimmer',
+      username: 'adminswdc',
+      email: 'admin.swdc@aaa.com',
+      phone: '081200000004',
+      password: passwordHash,
+      profileImage: avatarUrl('Admin SWDC Swimmer'),
+      role: 'ADMIN',
+      programScope: 'SWDC',
+      specialization: null,
+      isActive: true,
+    },
+  ];
 
   const coaches = COACH_NAMES.map((name, index) => {
     const number = padNumber(index + 1);
@@ -502,14 +1007,42 @@ async function main() {
 
   const seedCoachUsernames = coaches.map((coach) => coach.username);
   const seedStudentUsernames = students.map((student) => student.user.username);
-  const seedUsernames = [superadmin.username, owner.username, admin.username, ...seedCoachUsernames, ...seedStudentUsernames];
+  const seedProgramAdminUsernames = programAdmins.map((item) => item.username);
+  // Username admin global lama tetap dibersihkan agar reseed menggantinya
+  // dengan tiga akun admin program dan tidak meninggalkan akun global seed.
+  const seedUsernames = [superadmin.username, owner.username, 'admin', ...seedProgramAdminUsernames, ...seedCoachUsernames, ...seedStudentUsernames];
   const seedPoolNames = [...new Set(pools.map((pool) => pool.name))];
   const seedScheduleTitles = [...new Set(SCHEDULE_SEED.map((item) => item.title))];
-  const seedPackageNames = FINANCE_PACKAGE_SEED.map((item) => item.name);
+  const legacySeedPackageNames = [
+    'AAA Pemula 1 Bulan',
+    'A3 Menengah 1 Bulan',
+    'AAA Pemula 3 Bulan',
+    'SWDC Atlet 6 Bulan',
+  ];
+  const seedPackageNames = [
+    ...FINANCE_PACKAGE_SEED.map((item) => item.name),
+    ...legacySeedPackageNames,
+  ];
+  const seedPromotionCodes = PROMOTION_SEED.map((item) => item.code);
+  const seedArticleSlugs = ARTICLE_SEED.map((item) => item.slug);
+  const seedTestimonialQuotes = TESTIMONIAL_SEED.map((item) => item.quote);
+  const seedLeadPhones = LEAD_SEED.map((item) => item.parentPhone);
 
   // Hapus hanya data seed lama agar script idempotent dan tidak menghapus
   // pengguna/kolam manual yang tidak berasal dari seeder ini.
   await prisma.$transaction([
+    prisma.lead.deleteMany({
+      where: { parentPhone: { in: seedLeadPhones } },
+    }),
+    prisma.article.deleteMany({
+      where: { slug: { in: seedArticleSlugs } },
+    }),
+    prisma.promotion.deleteMany({
+      where: { code: { in: seedPromotionCodes } },
+    }),
+    prisma.testimonial.deleteMany({
+      where: { quote: { in: seedTestimonialQuotes } },
+    }),
     prisma.studentReport.deleteMany({
       where: {
         student: {
@@ -609,7 +1142,7 @@ async function main() {
   ]);
 
   await prisma.user.createMany({
-    data: [superadmin, owner, admin, ...coaches],
+    data: [superadmin, owner, ...programAdmins, ...coaches],
   });
 
   // Siswa dibuat satu per satu agar akun User STUDENT terhubung langsung
@@ -633,7 +1166,7 @@ async function main() {
     data: staff,
   });
 
-  const [venueRecords, coachRecords, studentRecords, adminRecord] =
+  const [venueRecords, coachRecords, studentRecords, programAdminRecords] =
     await Promise.all([
       prisma.pool.findMany({
         where: { name: { in: seedPoolNames } },
@@ -657,14 +1190,15 @@ async function main() {
         select: {
           id: true,
           name: true,
+          level: true,
           user: {
             select: { username: true },
           },
         },
       }),
-      prisma.user.findUnique({
-        where: { username: admin.username },
-        select: { id: true },
+      prisma.user.findMany({
+        where: { username: { in: seedProgramAdminUsernames } },
+        select: { id: true, username: true, programScope: true },
       }),
     ]);
 
@@ -680,6 +1214,11 @@ async function main() {
   const studentByUsername = Object.fromEntries(
     studentRecords.map((student) => [student.user.username, student])
   );
+  const adminIdByProgram = Object.fromEntries(
+    programAdminRecords.map((item) => [item.programScope, item.id])
+  );
+  const recordedByForProgram = (program, studentLevel) =>
+    adminIdByProgram[program === 'PRIVATE' ? studentLevel : program] ?? null;
 
   const packageByKey = {};
 
@@ -764,7 +1303,7 @@ async function main() {
               : `SEED-${item.username.toUpperCase()}`,
           paidAt: isPaid ? transactionDate : null,
           createdAt: transactionDate,
-          recordedById: adminRecord?.id ?? null,
+          recordedById: recordedByForProgram(pkg?.program, student?.level),
           notes: 'Data contoh Finance dari seeder.',
         },
       };
@@ -893,7 +1432,10 @@ async function main() {
             : `SEED-EXTRA-${item.username.toUpperCase()}`,
         paidAt: item.status === 'PAID' ? transactionDate : null,
         createdAt: transactionDate,
-        recordedById: adminRecord?.id ?? null,
+        recordedById: recordedByForProgram(
+          item.program ?? student?.level,
+          student?.level
+        ),
         notes: 'Data contoh Finance dari seeder.',
       },
     });
@@ -1012,10 +1554,157 @@ async function main() {
     if (coachId) coachAssignmentCount += 1;
   }
 
-  const [superadminCount, ownerCount, adminCount, coachCount, studentCount] = await Promise.all([
+  const fullDbUserRecords = await prisma.user.findMany({
+    where: {
+      username: {
+        in: [superadmin.username, owner.username, ...seedCoachUsernames],
+      },
+    },
+    select: { id: true, username: true, name: true },
+  });
+  const fullDbUserByUsername = Object.fromEntries(
+    fullDbUserRecords.map((item) => [item.username, item])
+  );
+  const superadminRecord = fullDbUserByUsername[superadmin.username] ?? null;
+  const ownerRecord = fullDbUserByUsername[owner.username] ?? null;
+
+  await prisma.systemSetting.upsert({
+    where: { id: 'default' },
+    update: {
+      ...SYSTEM_SETTINGS_SEED,
+      updatedById: superadminRecord?.id ?? null,
+    },
+    create: {
+      id: 'default',
+      ...SYSTEM_SETTINGS_SEED,
+      updatedById: superadminRecord?.id ?? null,
+    },
+  });
+
+  for (const [index, template] of NOTIFICATION_TEMPLATE_SEED.entries()) {
+    const templateData = { ...template, sortOrder: index };
+    await prisma.notificationTemplate.upsert({
+      where: { id: template.id },
+      update: templateData,
+      create: templateData,
+    });
+  }
+
+  for (const item of PROGRAM_CONTENT_SEED) {
+    await prisma.programContent.upsert({
+      where: { program: item.program },
+      update: item,
+      create: item,
+    });
+  }
+
+  const testimonialResult = await prisma.testimonial.createMany({
+    data: TESTIMONIAL_SEED,
+  });
+
+  for (const item of FAQ_SEED) {
+    await prisma.faqItem.upsert({
+      where: { question: item.question },
+      update: item,
+      create: item,
+    });
+  }
+
+  let promotionCount = 0;
+
+  for (const item of PROMOTION_SEED) {
+    const { startOffset, endOffset, ...promotion } = item;
+
+    await prisma.promotion.create({
+      data: {
+        ...promotion,
+        batchId: null,
+        startsAt: financeDateWithOffset(startOffset, 0),
+        endsAt: financeDateWithOffset(endOffset, 10),
+        redeemedCount: 0,
+        referrerBenefit: item.referrerBenefit ?? null,
+        refereeBenefit: item.refereeBenefit ?? null,
+        status: 'ACTIVE',
+        createdById: superadminRecord?.id ?? null,
+      },
+    });
+    promotionCount += 1;
+  }
+
+  let articleCount = 0;
+
+  for (const item of ARTICLE_SEED) {
+    const { authorUsername, publishedOffset, ...article } = item;
+    const author = fullDbUserByUsername[authorUsername] ?? superadminRecord;
+
+    await prisma.article.create({
+      data: {
+        ...article,
+        authorId: author?.id ?? null,
+        authorName: author?.name ?? 'Tim AAA Sport Academy',
+        status: 'PUBLISHED',
+        scheduledAt: null,
+        publishedAt: financeDateWithOffset(publishedOffset, 2),
+        viewCount: 0,
+      },
+    });
+    articleCount += 1;
+  }
+
+  const leadAssignees = [ownerRecord, superadminRecord].filter(Boolean);
+  let leadCount = 0;
+
+  for (const [leadIndex, item] of LEAD_SEED.entries()) {
+    const {
+      activities,
+      createdOffset,
+      nextFollowUpOffset,
+      trialOffset,
+      ...lead
+    } = item;
+    const assignee = leadAssignees[leadIndex % Math.max(leadAssignees.length, 1)] ?? null;
+    const createdAt = financeDateWithOffset(createdOffset, 3);
+
+    await prisma.lead.create({
+      data: {
+        ...lead,
+        assignedToId: assignee?.id ?? null,
+        lastContactedAt:
+          item.status === 'NEW'
+            ? null
+            : financeDateWithOffset(createdOffset + 1, 4),
+        nextFollowUpAt:
+          nextFollowUpOffset === undefined
+            ? null
+            : financeDateWithOffset(nextFollowUpOffset, 3),
+        trialScheduledAt:
+          trialOffset === undefined
+            ? null
+            : financeDateWithOffset(trialOffset, 3),
+        convertedStudentId: null,
+        internalNotes: 'Data awal Marketing dari seeder full database.',
+        createdAt,
+        activities: {
+          create: activities.map((activity, activityIndex) => ({
+            type: activity.type,
+            title: activity.title,
+            description: activity.description,
+            actorId: activityIndex === 0 ? null : assignee?.id ?? null,
+            createdAt: financeDateWithOffset(
+              createdOffset + activityIndex,
+              4
+            ),
+          })),
+        },
+      },
+    });
+    leadCount += 1;
+  }
+
+  const [superadminCount, ownerCount, programAdminCount, coachCount, studentCount] = await Promise.all([
     prisma.user.count({ where: { username: superadmin.username } }),
     prisma.user.count({ where: { username: owner.username } }),
-    prisma.user.count({ where: { username: admin.username } }),
+    prisma.user.count({ where: { username: { in: seedProgramAdminUsernames } } }),
     prisma.user.count({ where: { username: { in: seedCoachUsernames } } }),
     prisma.user.count({ where: { username: { in: seedStudentUsernames } } }),
   ]);
@@ -1024,7 +1713,7 @@ async function main() {
   console.table({
     Superadmin: superadminCount,
     Owner: ownerCount,
-    Admin: adminCount,
+    'Admin Program': programAdminCount,
     Coach: coachCount,
     Student: studentCount,
     Staff: staffResult.count,
@@ -1035,6 +1724,13 @@ async function main() {
     'Langganan Finance': financeSubscriptionCount,
     'Transaksi Finance': financeTransactionResult.count,
     'Raport Siswa': studentReportCount,
+    'Template Notifikasi': NOTIFICATION_TEMPLATE_SEED.length,
+    'Konten Program': PROGRAM_CONTENT_SEED.length,
+    Testimoni: testimonialResult.count,
+    FAQ: FAQ_SEED.length,
+    Promo: promotionCount,
+    Artikel: articleCount,
+    Lead: leadCount,
   });
   console.log(`🔑 Password semua akun seed: ${DEFAULT_PASSWORD}`);
 }

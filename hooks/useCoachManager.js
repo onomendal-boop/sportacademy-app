@@ -14,7 +14,7 @@ const EMPTY_FORM = {
   username: '',
   email: '',
   password: '',
-  specialization: 'Pemula',
+  specialization: 'AAA Sport Academy',
   profileImage: '',
   status: 'ACTIVE',
 };
@@ -23,9 +23,9 @@ function normalize(value) {
   return String(value ?? '').toLowerCase();
 }
 
-export default function useCoachManager(initialCoaches = [], canManage = false, canDelete = false) {
+export default function useCoachManager(initialCoaches = [], canManage = false, canDelete = false, initialSearch = '') {
   const [coaches, setCoaches] = useState(initialCoaches);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [specializationFilter, setSpecializationFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
@@ -94,7 +94,7 @@ export default function useCoachManager(initialCoaches = [], canManage = false, 
       username: coach.username ?? '',
       email: coach.email ?? '',
       password: '',
-      specialization: coach.specialization ?? 'Pemula',
+      specialization: coach.specialization ?? 'AAA Sport Academy',
       profileImage: coach.profileImage ?? '',
       status: coach.isActive ? 'ACTIVE' : 'INACTIVE',
     });

@@ -24,10 +24,11 @@ function normalize(value) {
 export default function useTrainingVenueManager(
   initialVenues = [],
   canManage = false,
-  canDelete = false
+  canDelete = false,
+  initialSearch = ''
 ) {
   const [venues, setVenues] = useState(initialVenues);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [locationFilter, setLocationFilter] = useState('ALL');
 

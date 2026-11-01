@@ -27,12 +27,7 @@ async function LoginContent({ searchParams }) {
     redirect(nextPath);
   }
 
-  return (
-    <LoginForm
-      nextPath={nextPath}
-      showDemoCredentials={process.env.NODE_ENV !== 'production'}
-    />
-  );
+  return <LoginForm nextPath={nextPath} />;
 }
 
 /**

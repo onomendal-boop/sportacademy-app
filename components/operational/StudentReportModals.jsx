@@ -19,7 +19,7 @@ import {
 import { getAverageScoreLabel } from '@/hooks/useStudentReportManager';
 import {
   PROGRAM_CONFIG,
-  REPORT_LEVEL_OPTIONS,
+  getReportLevelOptionsForScope,
   REPORT_RECOMMENDATION_LABELS,
   REPORT_RECOMMENDATION_OPTIONS,
   REPORT_SCORE_LABELS,
@@ -104,6 +104,9 @@ export function ReportFormModal({ manager }) {
   const isSaving = manager.isSaving;
   const isEditing = Boolean(manager.editingReport);
   const isCoachUser = manager.currentUser?.role === 'COACH';
+  const levelOptions = getReportLevelOptionsForScope(
+    manager.currentUser?.programScope
+  );
   const showPromotionNotice =
     form.status === 'PUBLISHED' && form.recommendation === 'LEVEL_UP';
   const editingStudentMissing =
@@ -222,7 +225,7 @@ export function ReportFormModal({ manager }) {
             disabled={isSaving}
             className={inputClassName(Boolean(errors.level))}
           >
-            {REPORT_LEVEL_OPTIONS.map((option) => (
+            {levelOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

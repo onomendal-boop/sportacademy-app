@@ -9,7 +9,7 @@ import {
 import { coachUpdateSchema } from '@/lib/validations/dataMaster';
 
 export async function PATCH(request, { params }) {
-  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER', 'ADMIN']);
+  const { response } = await requireApiUser(['SUPERADMIN', 'OWNER']);
   if (response) return response;
 
   const { id } = await params;
